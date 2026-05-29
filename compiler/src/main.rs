@@ -1,3 +1,5 @@
+use compiler::driver::CanaryDriver;
+
 fn main() {
-    println!("Hello, world!");
+    CanaryDriver::default().run();
 }

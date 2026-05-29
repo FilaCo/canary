@@ -1,3 +1,7 @@
 [workspace]
 resolver = "3"
 members = ["compiler", "runtime"]
+
+[workspace.dependencies]
+clap = { version = "4" }
+thiserror = { version = "2" }

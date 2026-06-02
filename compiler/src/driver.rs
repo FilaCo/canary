@@ -37,7 +37,7 @@ impl CanaryDriver {
             match input.read_line(&mut line) {
                 Err(e) => eprintln!("{e}"),
                 Ok(0) => break,
-                Ok(_) => Self::run_source(&line),
+                Ok(_) => Self::run_source(line.trim_end()),
             }
 
             line.clear();

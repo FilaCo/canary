@@ -4,17 +4,17 @@ use crate::ir::source::Span;
 pub struct CanaryFile<'db> {
     #[tracked]
     #[returns(ref)]
-    pub statements: Vec<Statement<'db>>,
+    pub stmts: Vec<Stmt<'db>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, salsa::Update)]
-pub struct Statement<'db> {
-    pub kind: StatementKind<'db>,
+pub struct Stmt<'db> {
+    pub kind: StmtKind<'db>,
     pub span: Span<'db>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, salsa::Update)]
-pub enum StatementKind<'db> {
+pub enum StmtKind<'db> {
     Expr(Expr<'db>),
 }
 
@@ -34,4 +34,10 @@ pub enum ExprKind<'db> {
         expr: Box<Expr<'db>>,
     },
     LitConst,
+}
+
+#[salsa::interned(debug)]
+pub struct Value<'db> {
+    #[returns(ref)]
+    pub value: String,
 }

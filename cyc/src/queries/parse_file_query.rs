@@ -1,9 +1,10 @@
 use crate::{
     db::CanaryDb,
     ir::{source::SourceFile, syntax::CanaryFile},
+    parse::Parser,
 };
 
 #[salsa::tracked]
 pub fn parse_file<'db>(db: &'db dyn CanaryDb, file: SourceFile) -> CanaryFile<'db> {
-    CanaryFile::new(db, Vec::new())
+    Parser::new(db, file).canary_file()
 }

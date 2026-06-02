@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["compiler", "runtime"]
+members = ["cyc", "runtime"]
 
 [workspace.dependencies]
 clap = { version = "4" }

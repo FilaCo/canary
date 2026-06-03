@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct File {
     pub path: PathBuf,
     pub contents: String,

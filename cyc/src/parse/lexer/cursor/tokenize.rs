@@ -7,7 +7,7 @@ impl<'src> Cursor<'src> {
     pub fn tokenize(input: &'src str) -> impl Iterator<Item = Token> {
         let mut cursor = Self::new(input);
         std::iter::from_fn(move || {
-            let token = cursor.advance_token();
+            let token = cursor.bump_token();
             if token.kind != EndOfFile {
                 Some(token)
             } else {
@@ -17,7 +17,7 @@ impl<'src> Cursor<'src> {
     }
 
     /// Parses a token from the input string.
-    pub fn advance_token(&mut self) -> Token {
+    pub fn bump_token(&mut self) -> Token {
         let Some(first_char) = self.bump() else {
             return Token {
                 kind: EndOfFile,

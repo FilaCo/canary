@@ -1,4 +1,4 @@
-use crate::ir::source::Span;
+use crate::ir::{source::Span, syntax::Symbol};
 
 use TokenKind::*;
 
@@ -45,10 +45,15 @@ pub enum TokenKind {
     RParen,
 
     /// A literal constant value, e.g. `42` or `321.123`.
-    LitConst { kind: LitConstKind },
+    LitConst {
+        kind: LitConstKind,
+        sym: Symbol,
+    },
 
     /// Dummy token for parser needs.
     Dummy,
+
+    Error,
 
     /// End of input.
     EndOfFile,

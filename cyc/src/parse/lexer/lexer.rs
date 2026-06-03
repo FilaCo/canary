@@ -3,7 +3,7 @@ use std::str::Chars;
 use crate::{
     ir::{
         source::{BytePos, Span},
-        syntax::{Token, TokenKind},
+        syntax::{LitConstKind, Symbol, Token, TokenKind},
     },
     parse::lexer::cursor::{self, Cursor},
 };
@@ -42,7 +42,7 @@ impl<'src> Lexer<'src> {
     }
 
     fn next_token_from_cursor(&mut self) -> (Token, bool) {
-        let mut preceeded_by_ws = false;
+        let mut preceded_by_ws = false;
         let mut swallow_next_invalid = 0;
         // Skip trivial (whitespace & comments) tokens
         loop {
@@ -53,7 +53,7 @@ impl<'src> Lexer<'src> {
 
             let kind = match token.kind {
                 cursor::TokenKind::Whitespace => {
-                    preceeded_by_ws = true;
+                    preceded_by_ws = true;
                     continue;
                 }
 
@@ -69,7 +69,7 @@ impl<'src> Lexer<'src> {
                 cursor::TokenKind::RParen => RParen,
 
                 cursor::TokenKind::LitConst { kind } => {
-                    todo!()
+                    self.cook_lexer_lit_const(start, self.pos, kind)
                 }
 
                 cursor::TokenKind::Unknown => {
@@ -79,7 +79,21 @@ impl<'src> Lexer<'src> {
                 cursor::TokenKind::EndOfFile => EndOfFile,
             };
 
-            todo!()
+            let span = Span::new(start, self.pos);
+            return (Token::new(kind, span), preceded_by_ws);
         }
+    }
+
+    fn cook_lexer_lit_const(
+        &self,
+        start: BytePos,
+        end: BytePos,
+        kind: cursor::LitConstKind,
+    ) -> TokenKind {
+        match kind {
+            cursor::LitConstKind::Int { empty_int } => todo!(),
+            cursor::LitConstKind::Float { empty_exp } => todo!(),
+        }
+        todo!()
     }
 }

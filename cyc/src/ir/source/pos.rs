@@ -19,14 +19,6 @@ macro_rules! impl_pos {
                 fn to_usize(&self) -> usize {
                     self.0 as usize
                 }
-
-                fn from_u32(n: u32) -> Self {
-                    Self(n as $inner_ty)
-                }
-
-                fn to_u32(&self) -> u32 {
-                    self.0 as u32
-                }
             }
 
             impl Add for $ident {
@@ -62,8 +54,6 @@ macro_rules! impl_pos {
 
 impl_pos! {
     /// A byte offset.
-    ///
-    /// Keep this small (currently 32-bits), as AST contains a lot of them.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-    pub struct BytePos(pub u32);
+    pub struct BytePos(pub usize);
 }

@@ -4,7 +4,7 @@
 #[derive(Debug)]
 pub struct Token {
     pub kind: TokenKind,
-    pub len: u32,
+    pub len: usize,
 }
 
 /// Enum representing common lexeme types.

@@ -1,7 +1,13 @@
 use crate::ir::source::Span;
 
 #[derive(Debug)]
-pub struct CanaryFile {
+pub struct Seed {}
+
+#[derive(Debug)]
+pub struct Module {}
+
+#[derive(Debug)]
+pub struct File {
     pub stmts: Vec<Stmt>,
 }
 

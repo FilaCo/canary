@@ -1,11 +1,15 @@
-use crate::ci::CanaryConfig;
+use std::path::PathBuf;
 
+#[derive(Debug)]
 pub struct Canary {
-    cfg: CanaryConfig,
+    pub cfg: CanaryConfig,
 }
 
 impl Canary {
-    pub fn new(cfg: CanaryConfig) -> Self {
-        Self { cfg }
-    }
+    pub fn parse_seed(&self) {}
+}
+
+#[derive(Debug)]
+pub struct CanaryConfig {
+    pub input: PathBuf,
 }

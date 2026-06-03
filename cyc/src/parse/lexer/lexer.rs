@@ -2,34 +2,36 @@ use std::str::Chars;
 
 use crate::ir::{
     source::Span,
-    syntax::{CanaryToken, CanaryTokenKind},
+    syntax::{Token, TokenKind},
 };
 
-use CanaryTokenKind::*;
+use TokenKind::*;
 
+#[derive(Debug)]
 pub(super) struct Lexer<'src> {
     input: Chars<'src>,
     /// Byte position in the input stream.
     pos: usize,
-    token: CanaryToken,
+    /// Current token.
+    token: Token,
 }
 
-impl<'db> Lexer<'db> {
-    pub fn new(input: &'db str) -> Self {
+impl<'src> Lexer<'src> {
+    pub fn new(input: &'src str) -> Self {
         let mut lexer = Self {
             input: input.chars(),
             pos: 0,
-            token: CanaryToken::dummy(),
+            token: Token::dummy(),
         };
         let _ = lexer.bump();
         lexer
     }
 
-    pub fn first(&self) -> &CanaryToken {
+    pub fn first(&self) -> &Token {
         &self.token
     }
 
-    pub fn bump(&mut self) -> CanaryToken {
+    pub fn bump(&mut self) -> Token {
         let next_tok = loop {
             let (next_tok, is_next_tok_preceded_by_ws) = self.next_token_from_input();
 
@@ -44,7 +46,7 @@ impl<'db> Lexer<'db> {
         std::mem::replace(&mut self.token, next_tok)
     }
 
-    fn next_token_from_input(&mut self) -> (CanaryToken, bool) {
+    fn next_token_from_input(&mut self) -> (Token, bool) {
         let mut preceeded_by_ws = false;
         let mut swallow_next_invalid = 0;
         // Skip trivial (whitespace & comments) tokens
@@ -53,7 +55,7 @@ impl<'db> Lexer<'db> {
             let start = self.pos;
             let Some(first_char) = self.bump_char() else {
                 return (
-                    CanaryToken::new(EOF, Span::new(start, self.pos)),
+                    Token::new(EndOfFile, Span::new(start, self.pos)),
                     preceeded_by_ws,
                 );
             };
@@ -69,7 +71,7 @@ impl<'db> Lexer<'db> {
                     LF_CHAR => {
                         self.bump();
 
-                        NL
+                        Newline
                     }
                     _ => {
                         self.ws();
@@ -77,9 +79,10 @@ impl<'db> Lexer<'db> {
                         continue;
                     }
                 },
-                LF_CHAR => NL,
+                LF_CHAR => Newline,
 
-                // '0'..='9' => self.int(str_before, start),
+                '0'..='9' => self.num(),
+
                 ';' => Semi,
 
                 '-' => Minus,
@@ -95,7 +98,7 @@ impl<'db> Lexer<'db> {
             };
 
             let span = Span::new(start, self.pos);
-            return (CanaryToken::new(kind, span), preceeded_by_ws);
+            return (Token::new(kind, span), preceeded_by_ws);
         }
     }
 
@@ -103,13 +106,8 @@ impl<'db> Lexer<'db> {
         self.eat_char_while(is_whitespace)
     }
 
-    fn int(&mut self, str_before: &'db str, start: usize) -> CanaryTokenKind {
+    fn num(&mut self) -> TokenKind {
         todo!()
-        // self.eat_dec_digits();
-        // let end = self.pos - start;
-        // Int {
-        //     value: &str_before[..end],
-        // }
     }
 
     fn eat_dec_digits(&mut self) {
@@ -158,12 +156,12 @@ fn is_whitespace(c: char) -> bool {
 }
 
 impl<'src> Iterator for Lexer<'src> {
-    type Item = CanaryToken;
+    type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
         let t = self.bump();
         match t.kind {
-            EOF => None,
+            EndOfFile => None,
             _ => Some(t),
         }
     }

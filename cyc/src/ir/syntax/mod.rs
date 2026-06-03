@@ -1,5 +1,5 @@
-mod canary_file;
-mod canary_token;
+mod seed;
+mod token;
 
-pub use canary_file::*;
-pub use canary_token::*;
+pub use seed::*;
+pub use token::*;

@@ -1,15 +1,15 @@
 use crate::ir::source::Span;
 
-use CanaryTokenKind::*;
+use TokenKind::*;
 
 #[derive(Debug)]
-pub struct CanaryToken {
-    pub kind: CanaryTokenKind,
+pub struct Token {
+    pub kind: TokenKind,
     pub span: Span,
 }
 
-impl CanaryToken {
-    pub fn new(kind: CanaryTokenKind, span: Span) -> Self {
+impl Token {
+    pub fn new(kind: TokenKind, span: Span) -> Self {
         Self { kind, span }
     }
 
@@ -23,9 +23,9 @@ impl CanaryToken {
 }
 
 #[derive(Debug)]
-pub enum CanaryTokenKind {
+pub enum TokenKind {
     /// `LF | (CR [LF])`
-    NL,
+    Newline,
 
     /// `;`
     Semi,
@@ -45,13 +45,13 @@ pub enum CanaryTokenKind {
     RParen,
 
     /// A literal constant value, e.g. `42` or `321.123`.
-    LitConst { kind: LitConstKind, value: String },
+    LitConst { kind: LitConstKind },
 
     /// Dummy token for parser needs.
     Dummy,
 
     /// End of input.
-    EOF,
+    EndOfFile,
 }
 
 #[derive(Debug)]

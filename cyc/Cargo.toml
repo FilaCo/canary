@@ -5,9 +5,10 @@ edition = "2024"
 
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
+ctrlc.workspace = true
 memchr.workspace = true
 thiserror.workspace = true
-unicode-xid.workspace = true
+unicode-ident.workspace = true
 
 [dev-dependencies]
 expect-test.workspace = true

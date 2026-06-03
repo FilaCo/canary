@@ -1,7 +1,7 @@
-mod canary_db_impl;
+mod canary;
 mod config;
 mod run_ci;
 
-pub(super) use canary_db_impl::*;
+pub(super) use canary::*;
 pub use config::*;
 pub use run_ci::*;

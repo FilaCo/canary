@@ -1,15 +1,15 @@
-use crate::{ir::syntax::Value, parse::Span};
+use crate::ir::source::Span;
 
-use TokenKind::*;
+use CanaryTokenKind::*;
 
-#[derive(Clone, Copy, Debug)]
-pub(super) struct Token<'db> {
-    pub kind: TokenKind<'db>,
+#[derive(Debug)]
+pub struct CanaryToken {
+    pub kind: CanaryTokenKind,
     pub span: Span,
 }
 
-impl<'db> Token<'db> {
-    pub fn new(kind: TokenKind<'db>, span: Span) -> Self {
+impl CanaryToken {
+    pub fn new(kind: CanaryTokenKind, span: Span) -> Self {
         Self { kind, span }
     }
 
@@ -22,8 +22,8 @@ impl<'db> Token<'db> {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub(super) enum TokenKind<'db> {
+#[derive(Debug)]
+pub enum CanaryTokenKind {
     /// `LF | (CR [LF])`
     NL,
 
@@ -45,10 +45,7 @@ pub(super) enum TokenKind<'db> {
     RParen,
 
     /// A literal constant value, e.g. `42` or `321.123`.
-    LitConst {
-        kind: LitConstKind,
-        value: Value<'db>,
-    },
+    LitConst { kind: LitConstKind, value: String },
 
     /// Dummy token for parser needs.
     Dummy,
@@ -57,8 +54,8 @@ pub(super) enum TokenKind<'db> {
     EOF,
 }
 
-#[derive(Clone, Copy, Debug)]
-pub(super) enum LitConstKind {
+#[derive(Debug)]
+pub enum LitConstKind {
     Int,
     Float,
 }

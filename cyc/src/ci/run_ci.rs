@@ -1,8 +1,5 @@
-use crate::{
-    ci::{CanaryConfig, CanaryDbImpl},
-    db::CanaryDb,
-};
+use crate::ci::{Canary, CanaryConfig};
 
-pub fn run_ci<R>(cfg: CanaryConfig, f: impl Fn(&dyn CanaryDb) -> R) -> R {
-    f(&CanaryDbImpl::new(cfg))
+pub fn run_ci<R>(cfg: CanaryConfig, f: impl Fn(&Canary) -> R) -> R {
+    f(&Canary::new(cfg))
 }

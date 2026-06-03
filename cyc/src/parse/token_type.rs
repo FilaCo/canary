@@ -1,4 +1,4 @@
-use crate::parse::TokenKind;
+use crate::ir::syntax::CanaryTokenKind;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TokenType {
@@ -31,20 +31,26 @@ pub enum TokenType {
 
 use TokenType::*;
 
-impl From<TokenKind<'_>> for TokenType {
-    fn from(value: TokenKind<'_>) -> Self {
-        match value {
-            TokenKind::NL => NL,
-            TokenKind::Semi => Semi,
-            TokenKind::Minus => Minus,
-            TokenKind::Plus => Plus,
-            TokenKind::Slash => Slash,
-            TokenKind::Star => Star,
-            TokenKind::LParen => LParen,
-            TokenKind::RParen => RParen,
-            TokenKind::LitConst { kind: _, value: _ } => LitConst,
-            TokenKind::Dummy => todo!(),
-            TokenKind::EOF => EOF,
-        }
+impl PartialEq<CanaryTokenKind> for TokenType {
+    fn eq(&self, other: &CanaryTokenKind) -> bool {
+        matches!(
+            (self, other),
+            (NL, CanaryTokenKind::NL)
+                | (Semi, CanaryTokenKind::Semi)
+                | (Minus, CanaryTokenKind::Minus)
+                | (Plus, CanaryTokenKind::Plus)
+                | (Slash, CanaryTokenKind::Slash)
+                | (Star, CanaryTokenKind::Star)
+                | (LParen, CanaryTokenKind::LParen)
+                | (RParen, CanaryTokenKind::RParen)
+                | (LitConst, CanaryTokenKind::LitConst { kind: _, value: _ })
+                | (EOF, CanaryTokenKind::EOF)
+        )
+    }
+}
+
+impl PartialEq<TokenType> for CanaryTokenKind {
+    fn eq(&self, other: &TokenType) -> bool {
+        other == self
     }
 }

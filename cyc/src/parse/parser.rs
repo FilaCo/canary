@@ -1,27 +1,26 @@
 use crate::{
-    db::CanaryDb,
     ir::{
         source::SourceFile,
-        syntax::{CanaryFile, Stmt},
+        syntax::{CanaryFile, CanaryToken, Stmt},
     },
-    parse::{Lexer, Token, TokenType},
+    parse::{Lexer, TokenType},
 };
 
-pub struct Parser<'db> {
-    db: &'db dyn CanaryDb,
-    lexer: Lexer<'db>,
+pub struct Parser<'src> {
+    lexer: Lexer<'src>,
     file: SourceFile,
+    token: CanaryToken,
 }
 
 impl<'db> Parser<'db> {
-    pub fn new(db: &'db dyn CanaryDb, file: SourceFile) -> Self {
+    pub fn new(file: SourceFile) -> Self {
         todo!()
     }
 
     /// ```ebnf
     /// canary_file = { NL } { stmt semi } EOF .
     /// ```
-    pub fn canary_file(&mut self) -> CanaryFile<'db> {
+    pub fn canary_file(&mut self) -> CanaryFile {
         while self.eat(TokenType::NL) {}
 
         let mut stmts = Vec::new();
@@ -33,17 +32,17 @@ impl<'db> Parser<'db> {
 
         self.expect(TokenType::EOF);
 
-        CanaryFile::new(self.db, stmts)
+        todo!()
     }
 
-    fn stmt(&mut self) -> Stmt<'db> {
+    fn stmt(&mut self) -> Stmt {
         todo!()
     }
 
     /// ```ebnf
     /// semi = ( ";" | NL ) { NL } .
     /// ```
-    fn semi(&mut self) -> Option<Token<'db>> {
+    fn semi(&mut self) -> Option<CanaryToken> {
         if !self.at_any(&[TokenType::Semi, TokenType::NL]) {
             return None;
         }
@@ -54,7 +53,7 @@ impl<'db> Parser<'db> {
         Some(tok)
     }
 
-    fn expect(&mut self, expected: TokenType) -> Option<Token<'db>> {
+    fn expect(&mut self, expected: TokenType) -> Option<CanaryToken> {
         if self.at(expected) {
             return Some(self.bump());
         }
@@ -72,18 +71,18 @@ impl<'db> Parser<'db> {
     }
 
     fn at_any(&self, expected: &[TokenType]) -> bool {
-        expected.contains(&TokenType::from(self.first().kind))
+        expected.iter().any(|tt| *tt == self.first().kind)
     }
 
     fn at(&self, expected: TokenType) -> bool {
-        TokenType::from(self.first().kind) == expected
+        self.first().kind == expected
     }
 
-    fn first(&self) -> &Token<'db> {
-        self.lexer.first()
+    fn first(&self) -> &CanaryToken {
+        &self.token
     }
 
-    fn bump(&mut self) -> Token<'db> {
-        self.lexer.bump()
+    fn bump(&mut self) -> CanaryToken {
+        std::mem::replace(&mut self.token, self.lexer.bump())
     }
 }

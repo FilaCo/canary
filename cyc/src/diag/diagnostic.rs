@@ -1,5 +1,4 @@
-#[salsa::accumulator]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Diagnostic {
     pub kind: DiagnosticKind,
     pub msg: String,

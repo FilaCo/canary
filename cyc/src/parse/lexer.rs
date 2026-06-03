@@ -1,37 +1,35 @@
 use std::str::Chars;
 
-use crate::{
-    db::CanaryDb,
-    ir::source::BytePos,
-    parse::{Span, Token, TokenKind},
+use crate::ir::{
+    source::Span,
+    syntax::{CanaryToken, CanaryTokenKind},
 };
 
-use TokenKind::*;
+use CanaryTokenKind::*;
 
-pub(super) struct Lexer<'db> {
-    db: &'db dyn CanaryDb,
-    input: Chars<'db>,
-    pos: BytePos,
-    token: Token<'db>,
+pub(super) struct Lexer<'src> {
+    input: Chars<'src>,
+    /// Byte position in the input stream.
+    pos: usize,
+    token: CanaryToken,
 }
 
 impl<'db> Lexer<'db> {
-    pub fn new(db: &'db dyn CanaryDb, input: &'db str) -> Self {
+    pub fn new(input: &'db str) -> Self {
         let mut lexer = Self {
-            db,
             input: input.chars(),
-            pos: BytePos(0),
-            token: Token::dummy(),
+            pos: 0,
+            token: CanaryToken::dummy(),
         };
         let _ = lexer.bump();
         lexer
     }
 
-    pub fn first(&self) -> &Token<'db> {
+    pub fn first(&self) -> &CanaryToken {
         &self.token
     }
 
-    pub fn bump(&mut self) -> Token<'db> {
+    pub fn bump(&mut self) -> CanaryToken {
         let next_tok = loop {
             let (next_tok, is_next_tok_preceded_by_ws) = self.next_token_from_input();
 
@@ -46,7 +44,7 @@ impl<'db> Lexer<'db> {
         std::mem::replace(&mut self.token, next_tok)
     }
 
-    fn next_token_from_input(&mut self) -> (Token<'db>, bool) {
+    fn next_token_from_input(&mut self) -> (CanaryToken, bool) {
         let mut preceeded_by_ws = false;
         let mut swallow_next_invalid = 0;
         // Skip trivial (whitespace & comments) tokens
@@ -55,7 +53,7 @@ impl<'db> Lexer<'db> {
             let start = self.pos;
             let Some(first_char) = self.bump_char() else {
                 return (
-                    Token::new(EOF, self.mk_sp(start, self.pos)),
+                    CanaryToken::new(EOF, Span::new(start, self.pos)),
                     preceeded_by_ws,
                 );
             };
@@ -66,7 +64,24 @@ impl<'db> Lexer<'db> {
                     preceeded_by_ws = true;
                     continue;
                 }
+
+                CR_CHAR => match self.first_char() {
+                    LF_CHAR => {
+                        self.bump();
+
+                        NL
+                    }
+                    _ => {
+                        self.ws();
+                        preceeded_by_ws = true;
+                        continue;
+                    }
+                },
+                LF_CHAR => NL,
+
                 // '0'..='9' => self.int(str_before, start),
+                ';' => Semi,
+
                 '-' => Minus,
                 '+' => Plus,
                 '/' => Slash,
@@ -79,8 +94,8 @@ impl<'db> Lexer<'db> {
                 }
             };
 
-            let span = self.mk_sp(start, self.pos);
-            return (Token::new(kind, span), preceeded_by_ws);
+            let span = Span::new(start, self.pos);
+            return (CanaryToken::new(kind, span), preceeded_by_ws);
         }
     }
 
@@ -88,7 +103,7 @@ impl<'db> Lexer<'db> {
         self.eat_char_while(is_whitespace)
     }
 
-    fn int(&mut self, str_before: &'db str, start: BytePos) -> TokenKind<'db> {
+    fn int(&mut self, str_before: &'db str, start: usize) -> CanaryTokenKind {
         todo!()
         // self.eat_dec_digits();
         // let end = self.pos - start;
@@ -108,10 +123,6 @@ impl<'db> Lexer<'db> {
         }
     }
 
-    fn mk_sp(&self, start: BytePos, end: BytePos) -> Span {
-        Span::new(start, end)
-    }
-
     fn eat_char_while(&mut self, predicate: impl Fn(char) -> bool) {
         while !self.is_at_eof() && predicate(self.first_char()) {
             self.bump_char();
@@ -120,7 +131,7 @@ impl<'db> Lexer<'db> {
 
     fn bump_char(&mut self) -> Option<char> {
         let c = self.input.next();
-        self.pos += BytePos(c.map(|c| c.len_utf8()).unwrap_or(0));
+        self.pos += c.map(|c| c.len_utf8()).unwrap_or(0);
         c
     }
 
@@ -134,6 +145,8 @@ impl<'db> Lexer<'db> {
 }
 
 const EOF_CHAR: char = '\0';
+const LF_CHAR: char = '\u{000A}';
+const CR_CHAR: char = '\u{000D}';
 
 fn is_whitespace(c: char) -> bool {
     matches!(
@@ -144,8 +157,8 @@ fn is_whitespace(c: char) -> bool {
     )
 }
 
-impl<'a> Iterator for Lexer<'a> {
-    type Item = Token<'a>;
+impl<'src> Iterator for Lexer<'src> {
+    type Item = CanaryToken;
 
     fn next(&mut self) -> Option<Self::Item> {
         let t = self.bump();

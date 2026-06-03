@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 clap = { workspace = true, features = ["derive"] }
 memchr.workspace = true
-salsa.workspace = true
 thiserror.workspace = true
 unicode-xid.workspace = true
 

@@ -152,8 +152,3 @@ fn is_whitespace(c: char) -> bool {
         | '\u{000C}' // form feed
     )
 }
-
-fn is_id_start(c: char) -> bool {
-    // This is XID_Start OR '_' (which formally is not a XID_Start).
-    c == '_' || unicode_ident::is_xid_start(c)
-}

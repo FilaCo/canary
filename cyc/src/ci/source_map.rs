@@ -6,18 +6,29 @@ use std::{
 
 use crate::ir::source::{BytePos, SourceFile, Span};
 
+/// Thread-safe registry of loaded source files.
+///
+/// All files share one global byte-offset space ([`BytePos`]): each file gets a
+/// disjoint range, so a single `BytePos` pins down both a file and an offset
+/// within it.
 #[derive(Debug)]
 pub struct SourceMap {
     inner: RwLock<SourceMapImpl>,
 }
 
 impl SourceMap {
+    /// Creates an empty source map.
     pub fn new() -> Self {
         let src_map_impl = SourceMapImpl::new();
         let inner = RwLock::new(src_map_impl);
         Self { inner }
     }
 
+    /// Loads the file at `path` and returns it, or returns the already-loaded
+    /// file if it was added before.
+    ///
+    /// Paths are matched verbatim — canonicalize first if relative paths or
+    /// symlinks should dedup. Panics if the file cannot be read.
     pub fn add(&self, path: &Path) -> Arc<SourceFile> {
         if let Some(src_file_ptr) = self.get_by_path(path) {
             return src_file_ptr;
@@ -26,6 +37,8 @@ impl SourceMap {
         self.register(read_source_file(&path))
     }
 
+    /// Returns the file whose range contains `pos`, or `None` if none does
+    /// (a position past the end, or the gap byte between two files).
     pub fn get_by_pos(&self, pos: BytePos) -> Option<Arc<SourceFile>> {
         let inner = self.inner.read().expect("unable to acquire read lock");
         let n = inner.files.partition_point(|f| f.span.lo <= pos);
@@ -36,6 +49,8 @@ impl SourceMap {
             .cloned()
     }
 
+    /// Returns the already-loaded file for `path` (matched verbatim), or `None`.
+    /// Does not touch disk — use [`add`](Self::add) to load.
     pub fn get_by_path(&self, path: &Path) -> Option<Arc<SourceFile>> {
         let inner = self.inner.read().expect("unable to acquire read lock");
         inner.files_by_path.get(path).cloned()
@@ -109,10 +124,6 @@ fn source_file_from_contents(path: PathBuf, contents: String) -> SourceFile {
 
 /// Byte offsets of each line start. `lines[0]` is always `BytePos(0)` so every file
 /// (even empty) has line 0. A new line starts after each terminator.
-///
-/// INVARIANT: the set of terminators here MUST match the lexer cursor's `Newline`
-/// rule (parse/lexer/cursor/tokenize.rs): `\r\n` (one break), lone `\r`, and `\n`.
-/// If you change one, change the other — otherwise spans and line/col desync.
 fn compute_line_starts(contents: &str) -> Vec<BytePos> {
     let mut chars = contents.chars();
     let mut pos = BytePos(0);

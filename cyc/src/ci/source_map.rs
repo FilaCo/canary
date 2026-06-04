@@ -148,4 +148,187 @@ const CR_CHAR: char = '\u{000D}';
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn make_source_file(path: &str, contents: &str) -> SourceFile {
+        source_file_from_contents(PathBuf::from(path), contents.to_string())
+    }
+
+    fn bytes_len(map: &SourceMap) -> BytePos {
+        map.inner.read().unwrap().bytes_len
+    }
+
+    fn file_count(map: &SourceMap) -> usize {
+        map.inner.read().unwrap().files.len()
+    }
+
+    fn check_line_starts(input: &str, expected: &[u32]) {
+        let expected: Vec<BytePos> = expected.iter().copied().map(BytePos).collect();
+        assert_eq!(compute_line_starts(input), expected, "input = {input:?}");
+    }
+
+    #[test]
+    fn line_starts_no_newline() {
+        check_line_starts("", &[0]); // empty file still has line 0
+        check_line_starts("abc", &[0]); // no trailing newline -> one line
+        check_line_starts("ффф", &[0]); // multi-byte, no newline
+    }
+
+    #[test]
+    fn line_starts_lf() {
+        check_line_starts("a\nb", &[0, 2]);
+        check_line_starts("a\n", &[0, 2]); // trailing newline -> empty last line
+        check_line_starts("\n\n", &[0, 1, 2]); // consecutive blank lines
+    }
+
+    #[test]
+    fn line_starts_crlf_is_single_break() {
+        check_line_starts("a\r\nb", &[0, 3]); // \r\n counts as one break (+2)
+        check_line_starts("a\r\n", &[0, 3]);
+    }
+
+    #[test]
+    fn line_starts_lone_cr() {
+        check_line_starts("a\rb", &[0, 2]); // lone \r breaks (matches the lexer)
+        check_line_starts("a\r", &[0, 2]);
+        check_line_starts("a\n\rb", &[0, 2, 3]); // LF then lone CR = two breaks
+    }
+
+    #[test]
+    fn line_starts_multibyte_advances_by_utf8_len() {
+        check_line_starts("ф\n", &[0, 3]); // 'ф' is 2 bytes
+        check_line_starts("😀\n", &[0, 5]); // '😀' is 4 bytes
+    }
+
+    #[test]
+    fn source_file_local_span_and_lines() {
+        let sf = make_source_file("a.cy", "ab\ncd");
+        assert_eq!(sf.span, Span::new(BytePos(0), BytePos(5)));
+        assert_eq!(sf.line_starts, vec![BytePos(0), BytePos(3)]);
+    }
+
+    #[test]
+    fn source_file_empty() {
+        let sf = make_source_file("e.cy", "");
+        assert_eq!(sf.span, Span::new(BytePos(0), BytePos(0)));
+        assert_eq!(sf.line_starts, vec![BytePos(0)]);
+    }
+
+    #[test]
+    fn span_hi_equals_byte_len_for_multibyte() {
+        // The regression the `+1`-per-char version failed: `hi` is a *byte* offset.
+        for contents in ["ф\n", "😀\n", "ффф"] {
+            let sf = make_source_file("m.cy", contents);
+            assert_eq!(sf.span.hi, BytePos::from_usize(contents.len()));
+        }
+    }
+
+    #[test]
+    fn register_single_file() {
+        let map = SourceMap::new();
+        let sf = map.register(make_source_file("a.cy", "abc"));
+        assert_eq!(sf.span, Span::new(BytePos(0), BytePos(3)));
+        assert_eq!(sf.line_starts, vec![BytePos(0)]);
+        assert_eq!(file_count(&map), 1);
+        assert_eq!(bytes_len(&map), BytePos(4)); // len 3 + gap 1
+    }
+
+    #[test]
+    fn register_two_files_reserves_gap() {
+        let map = SourceMap::new();
+        let a = map.register(make_source_file("a.cy", "abc")); // [0, 3)
+        let b = map.register(make_source_file("b.cy", "de")); // [4, 6)
+        assert_eq!(a.span, Span::new(BytePos(0), BytePos(3)));
+        assert_eq!(b.span, Span::new(BytePos(4), BytePos(6))); // starts at first.hi + 1
+        assert_eq!(bytes_len(&map), BytePos(7)); // 6 + gap 1
+        assert_eq!(file_count(&map), 2);
+    }
+
+    #[test]
+    fn register_rebases_line_starts() {
+        let map = SourceMap::new();
+        map.register(make_source_file("a.cy", "xy")); // [0, 2), bytes_len -> 3
+        let b = map.register(make_source_file("b.cy", "a\nb")); // lo = 3
+        assert_eq!(b.span, Span::new(BytePos(3), BytePos(6)));
+        assert_eq!(b.line_starts, vec![BytePos(3), BytePos(5)]); // local [0, 2] + lo
+    }
+
+    #[test]
+    fn register_same_path_is_idempotent() {
+        let map = SourceMap::new();
+        let first = map.register(make_source_file("a.cy", "abc"));
+        let second = map.register(make_source_file("a.cy", "different contents"));
+        assert!(Arc::ptr_eq(&first, &second)); // deduped, original kept
+        assert_eq!(file_count(&map), 1);
+        assert_eq!(bytes_len(&map), BytePos(4)); // advanced only once
+    }
+
+    fn two_file_map() -> (SourceMap, Arc<SourceFile>, Arc<SourceFile>) {
+        let map = SourceMap::new();
+        let a = map.register(make_source_file("a.cy", "abc")); // [0, 3)
+        let b = map.register(make_source_file("b.cy", "de")); // [4, 6)
+        (map, a, b)
+    }
+
+    #[test]
+    fn get_by_pos_inside_files() {
+        let (map, a, b) = two_file_map();
+        assert!(Arc::ptr_eq(&map.get_by_pos(BytePos(0)).unwrap(), &a)); // start of a
+        assert!(Arc::ptr_eq(&map.get_by_pos(BytePos(2)).unwrap(), &a)); // inside a
+        assert!(Arc::ptr_eq(&map.get_by_pos(BytePos(4)).unwrap(), &b)); // start of b
+        assert!(Arc::ptr_eq(&map.get_by_pos(BytePos(5)).unwrap(), &b)); // inside b
+    }
+
+    #[test]
+    fn get_by_pos_gap_and_out_of_range() {
+        let (map, _a, _b) = two_file_map();
+        assert!(map.get_by_pos(BytePos(3)).is_none()); // gap byte between files
+        assert!(map.get_by_pos(BytePos(6)).is_none()); // one past end of last file
+        assert!(map.get_by_pos(BytePos(100)).is_none()); // far beyond all files
+    }
+
+    #[test]
+    fn get_by_pos_empty_map() {
+        let map = SourceMap::new();
+        assert!(map.get_by_pos(BytePos(0)).is_none()); // checked_sub(1) underflow guard
+    }
+
+    #[test]
+    fn get_by_path_present_and_absent() {
+        let map = SourceMap::new();
+        let a = map.register(make_source_file("a.cy", "abc"));
+        assert!(Arc::ptr_eq(
+            &map.get_by_path(Path::new("a.cy")).unwrap(),
+            &a
+        ));
+        assert!(map.get_by_path(Path::new("missing.cy")).is_none());
+    }
+
+    #[test]
+    fn get_by_path_requires_exact_match() {
+        // Canonicalization is the caller's responsibility: differing path strings
+        // for the same file are intentionally distinct keys.
+        let map = SourceMap::new();
+        map.register(make_source_file("a.cy", "abc"));
+        assert!(map.get_by_path(Path::new("./a.cy")).is_none());
+    }
+
+    #[test]
+    fn register_concurrent_same_path_dedups() {
+        let map = SourceMap::new();
+        let ptrs = std::thread::scope(|s| {
+            let handles: Vec<_> = (0..8)
+                .map(|_| s.spawn(|| map.register(make_source_file("same.cy", "abc"))))
+                .collect();
+            handles
+                .into_iter()
+                .map(|h| h.join().unwrap())
+                .collect::<Vec<_>>()
+        });
+
+        // Every thread observes the same single registered file.
+        for p in &ptrs {
+            assert!(Arc::ptr_eq(p, &ptrs[0]));
+        }
+        assert_eq!(file_count(&map), 1);
+    }
 }

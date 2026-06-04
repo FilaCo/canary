@@ -12,12 +12,20 @@ macro_rules! impl_pos {
             $vis struct $ident($inner_vis $inner_ty);
 
             impl $ident {
-                fn from_usize(n: usize) -> Self {
+                pub fn from_usize(n: usize) -> Self {
                     Self(n as $inner_ty)
                 }
 
-                fn to_usize(&self) -> usize {
+                pub fn to_usize(&self) -> usize {
                     self.0 as usize
+                }
+
+                pub fn from_u32(n: u32) -> Self {
+                    Self(n as $inner_ty)
+                }
+
+                pub fn to_u32(&self) -> u32 {
+                    self.0 as u32
                 }
             }
 
@@ -55,5 +63,5 @@ macro_rules! impl_pos {
 impl_pos! {
     /// A byte offset.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-    pub struct BytePos(pub usize);
+    pub struct BytePos(pub u32);
 }

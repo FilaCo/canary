@@ -1,4 +1,4 @@
-use crate::ir::source::Span;
+use crate::ir::{source::Span, syntax::LitConst};
 
 #[derive(Debug)]
 pub struct Seed {}
@@ -7,7 +7,7 @@ pub struct Seed {}
 pub struct Module {}
 
 #[derive(Debug)]
-pub struct File {
+pub struct CanaryFile {
     pub stmts: Vec<Stmt>,
 }
 
@@ -32,6 +32,7 @@ pub struct Expr {
 pub enum ExprKind {
     Binary {
         lhs: Box<Expr>,
+        op: BinaryOp,
         rhs: Box<Expr>,
     },
     Grouped {
@@ -39,5 +40,22 @@ pub enum ExprKind {
         expr: Box<Expr>,
         rparen_sp: Span,
     },
-    LitConst,
+    LitConst {
+        value: LitConst,
+    },
+}
+
+#[derive(Debug)]
+pub struct BinaryOp {
+    pub kind: BinaryOpKind,
+    pub span: Span,
+}
+
+#[derive(Debug)]
+pub enum BinaryOpKind {
+    Sub,
+    Add,
+    Mul,
+    Div,
+    Err,
 }

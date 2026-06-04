@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::{
     ci::{CanaryConfig, run_ci},
     driver::CanaryDriver,
-    ir::source::File,
+    ir::source::SourceFile,
 };
 
 impl CanaryDriver {

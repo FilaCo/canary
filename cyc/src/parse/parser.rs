@@ -9,14 +9,14 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(file: source::File) -> Self {
+    pub fn new(file: source::SourceFile) -> Self {
         todo!()
     }
 
     /// ```ebnf
     /// file = { NL } { stmt semi } EOF .
     /// ```
-    pub fn parse_file(&mut self) -> syntax::File {
+    pub fn parse_file(&mut self) -> syntax::CanaryFile {
         // while self.eat(TokenType::NL) {}
 
         // let mut stmts = Vec::new();

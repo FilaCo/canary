@@ -1,7 +1,7 @@
-mod file;
 mod pos;
+mod source_file;
 mod span;
 
-pub use file::*;
 pub use pos::*;
+pub use source_file::*;
 pub use span::*;

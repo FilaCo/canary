@@ -32,7 +32,7 @@ impl<'src> Cursor<'src> {
 
                     Newline
                 }
-                _ => self.whitespace(),
+                _ => Newline,
             },
             LF_CHAR => Newline,
 

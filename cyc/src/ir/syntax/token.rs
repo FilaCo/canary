@@ -45,10 +45,7 @@ pub enum TokenKind {
     RParen,
 
     /// A literal constant value, e.g. `42` or `321.123`.
-    LitConst {
-        kind: LitConstKind,
-        sym: Symbol,
-    },
+    LitConst(LitConst),
 
     /// Dummy token for parser needs.
     Dummy,
@@ -57,6 +54,12 @@ pub enum TokenKind {
 
     /// End of input.
     EndOfFile,
+}
+
+#[derive(Debug)]
+pub struct LitConst {
+    pub kind: LitConstKind,
+    pub sym: Symbol,
 }
 
 #[derive(Debug)]

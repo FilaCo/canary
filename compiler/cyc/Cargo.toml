@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+ariadne.workspace = true
 clap = { workspace = true, features = ["derive"] }
 ctrlc.workspace = true
+cyc_macros.workspace = true
 indexmap.workspace = true
 memchr.workspace = true
 thiserror.workspace = true

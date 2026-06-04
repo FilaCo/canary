@@ -34,7 +34,7 @@ impl SourceMap {
             return src_file_ptr;
         }
 
-        self.register(read_source_file(&path))
+        self.register(read_source_file(path))
     }
 
     /// Returns the file whose range contains `pos`, or `None` if none does

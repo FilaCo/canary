@@ -1,7 +1,7 @@
 use std::sync::RwLock;
 
-use crate::{Diagnostic, DiagnosticKind};
-use DiagnosticKind::*;
+use crate::{Diagnostic, DiagnosticLevel};
+use DiagnosticLevel::*;
 
 #[derive(Debug)]
 pub struct DiagnosticContext {
@@ -21,17 +21,17 @@ impl DiagnosticContext {
 
     pub fn has_errors(&self) -> bool {
         let inner = self.inner.read().expect("unable to acquire read lock");
-        inner.iter().any(|d| d.kind == Error)
+        inner.iter().any(|d| d.lvl == Error)
     }
 
     pub fn error_count(&self) -> usize {
         let inner = self.inner.read().expect("unable to acquire read lock");
-        inner.iter().filter(|d| d.kind == Error).count()
+        inner.iter().filter(|d| d.lvl == Error).count()
     }
 
     pub fn warning_count(&self) -> usize {
         let inner = self.inner.read().expect("unable to acquire read lock");
-        inner.iter().filter(|d| d.kind == Warning).count()
+        inner.iter().filter(|d| d.lvl == Warning).count()
     }
 
     pub fn accumulated(&self) -> Vec<Diagnostic> {

@@ -1,36 +1,34 @@
-use DiagnosticKind::*;
+use DiagnosticLevel::*;
 use cyc_ir::source::Span;
 
 #[derive(Debug, Clone)]
 pub struct Diagnostic {
-    pub kind: DiagnosticKind,
+    pub lvl: DiagnosticLevel,
     pub msg: String,
-    pub span: Span,
+    pub primary_span: Span,
     pub labels: Vec<Label>,
-    pub notes: Vec<String>,
 }
 
 impl Diagnostic {
-    pub fn new(kind: DiagnosticKind, span: Span, msg: impl Into<String>) -> Self {
+    pub fn new(lvl: DiagnosticLevel, primary_span: Span, msg: impl Into<String>) -> Self {
         Self {
-            kind,
-            span,
+            lvl,
+            primary_span,
             msg: msg.into(),
             labels: Vec::new(),
-            notes: Vec::new(),
         }
     }
 
-    pub fn error(span: Span, msg: impl Into<String>) -> Self {
-        Self::new(Error, span, msg)
+    pub fn error(primary_span: Span, msg: impl Into<String>) -> Self {
+        Self::new(Error, primary_span, msg)
     }
 
-    pub fn warning(span: Span, msg: impl Into<String>) -> Self {
-        Self::new(Warning, span, msg)
+    pub fn warning(primary_span: Span, msg: impl Into<String>) -> Self {
+        Self::new(Warning, primary_span, msg)
     }
 
-    pub fn notice(span: Span, msg: impl Into<String>) -> Self {
-        Self::new(Notice, span, msg)
+    pub fn notice(primary_span: Span, msg: impl Into<String>) -> Self {
+        Self::new(Notice, primary_span, msg)
     }
 
     pub fn label(mut self, span: Span, msg: impl Into<String>) -> Self {
@@ -40,15 +38,10 @@ impl Diagnostic {
         });
         self
     }
-
-    pub fn note(mut self, msg: impl Into<String>) -> Self {
-        self.notes.push(msg.into());
-        self
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DiagnosticKind {
+pub enum DiagnosticLevel {
     Error,
     Warning,
     Notice,

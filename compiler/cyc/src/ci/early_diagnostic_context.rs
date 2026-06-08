@@ -1,5 +1,7 @@
 use yansi::Paint;
 
+use crate::ci::FatalError;
+
 #[derive(Debug)]
 pub struct EarlyDiagnosticContext;
 
@@ -8,13 +10,9 @@ impl EarlyDiagnosticContext {
         Self
     }
 
-    pub fn error(&self, msg: impl std::fmt::Display) -> ! {
+    pub fn fatal(&self, msg: impl std::fmt::Display) -> ! {
         eprintln!("{}: {msg}", "error".bright_red().bold());
-        std::process::exit(1);
-    }
-
-    pub fn warning(&self, msg: impl std::fmt::Display) {
-        eprintln!("{}: {msg}", "warning".bright_yellow().bold());
+        FatalError.raise()
     }
 }
 

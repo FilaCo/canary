@@ -31,7 +31,7 @@ impl SourceMap {
     /// file if it was added before.
     ///
     /// Paths are matched verbatim — canonicalize first if relative paths or
-    /// symlinks should dedup. Panics if the file cannot be read.
+    /// symlinks should dedup.
     pub fn add(&self, path: &Path) -> SourceMapResult<Arc<SourceFile>> {
         if let Some(src_file_ptr) = self.get_by_path(path) {
             return Ok(src_file_ptr);
@@ -117,12 +117,19 @@ type SourceMapResult<T> = Result<T, SourceMapError>;
 
 #[derive(Error, Debug)]
 pub enum SourceMapError {
-    #[error("{0}")]
-    UnableToReadFile(#[from] std::io::Error),
+    #[error("unable to read `{path}`: {source}")]
+    UnableToReadFile {
+        path: PathBuf,
+        source: std::io::Error,
+    },
 }
 
 fn read_source_file(path: &Path) -> SourceMapResult<SourceFile> {
-    let contents = std::fs::read_to_string(path)?;
+    let contents =
+        std::fs::read_to_string(path).map_err(|err| SourceMapError::UnableToReadFile {
+            path: path.to_path_buf(),
+            source: err,
+        })?;
     Ok(source_file_from_contents(path.to_path_buf(), contents))
 }
 

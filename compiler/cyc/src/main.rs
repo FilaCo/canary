@@ -1,5 +1,7 @@
+use std::process::ExitCode;
+
 use cyc::driver::CanaryDriver;
 
-fn main() {
-    CanaryDriver::default().run();
+fn main() -> ExitCode {
+    CanaryDriver::default().run()
 }

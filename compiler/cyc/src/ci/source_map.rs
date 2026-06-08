@@ -7,6 +7,7 @@ use std::{
 use cyc_lexer::Cursor;
 
 use cyc_ir::source::{BytePos, SourceFile, Span};
+use thiserror::Error;
 
 /// Thread-safe registry of loaded source files.
 ///
@@ -31,12 +32,12 @@ impl SourceMap {
     ///
     /// Paths are matched verbatim — canonicalize first if relative paths or
     /// symlinks should dedup. Panics if the file cannot be read.
-    pub fn add(&self, path: &Path) -> Arc<SourceFile> {
+    pub fn add(&self, path: &Path) -> SourceMapResult<Arc<SourceFile>> {
         if let Some(src_file_ptr) = self.get_by_path(path) {
-            return src_file_ptr;
+            return Ok(src_file_ptr);
         }
 
-        self.register(read_source_file(path))
+        Ok(self.register(read_source_file(path)?))
     }
 
     /// Returns the file whose range contains `pos`, or `None` if none does
@@ -112,9 +113,17 @@ impl Default for SourceMapImpl {
     }
 }
 
-fn read_source_file(path: &Path) -> SourceFile {
-    let contents = std::fs::read_to_string(path).expect("unable to read file");
-    source_file_from_contents(path.to_path_buf(), contents)
+type SourceMapResult<T> = Result<T, SourceMapError>;
+
+#[derive(Error, Debug)]
+pub enum SourceMapError {
+    #[error("{0}")]
+    UnableToReadFile(#[from] std::io::Error),
+}
+
+fn read_source_file(path: &Path) -> SourceMapResult<SourceFile> {
+    let contents = std::fs::read_to_string(path)?;
+    Ok(source_file_from_contents(path.to_path_buf(), contents))
 }
 
 /// Build a SourceFile with a *file-local* span `[0, len)` from in-memory contents.

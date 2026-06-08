@@ -163,9 +163,9 @@ dependencies = [
  "cyc_macros",
  "expect-test",
  "indexmap",
- "memchr",
  "thiserror",
  "unicode-ident",
+ "yansi",
 ]
 
 [[package]]

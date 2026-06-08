@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use crate::ir::source::BytePos;
+use crate::source::BytePos;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Span {

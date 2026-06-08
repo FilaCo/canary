@@ -1,4 +1,4 @@
-use crate::ir::{source::Span, syntax::Symbol};
+use crate::{source::Span, syntax::Symbol};
 
 use TokenKind::*;
 

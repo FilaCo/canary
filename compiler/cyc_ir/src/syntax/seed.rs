@@ -1,4 +1,4 @@
-use crate::ir::{source::Span, syntax::LitConst};
+use crate::{source::Span, syntax::LitConst};
 
 #[derive(Debug)]
 pub struct Seed {}
@@ -57,5 +57,5 @@ pub enum BinaryOpKind {
     Add,
     Mul,
     Div,
-    Err,
+    Error,
 }

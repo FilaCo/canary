@@ -1,4 +1,4 @@
-use crate::parse::lexer::cursor::{Cursor, LitConstKind, Token, TokenKind};
+use crate::{Cursor, LitConstKind, Token, TokenKind};
 
 use TokenKind::*;
 

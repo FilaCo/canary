@@ -1,20 +1,20 @@
 use std::sync::RwLock;
 
-use crate::diagnostic::{Diag, DiagKind};
-use DiagKind::*;
+use crate::{Diagnostic, DiagnosticKind};
+use DiagnosticKind::*;
 
 #[derive(Debug)]
-pub struct DiagCtx {
-    inner: RwLock<Vec<Diag>>,
+pub struct DiagnosticContext {
+    inner: RwLock<Vec<Diagnostic>>,
 }
 
-impl DiagCtx {
+impl DiagnosticContext {
     pub fn new() -> Self {
         let inner = RwLock::new(Vec::new());
         Self { inner }
     }
 
-    pub fn accumulate(&self, diag: impl Into<Diag>) {
+    pub fn accumulate(&self, diag: impl Into<Diagnostic>) {
         let mut inner = self.inner.write().expect("unable to acquire write lock");
         inner.push(diag.into());
     }
@@ -34,13 +34,13 @@ impl DiagCtx {
         inner.iter().filter(|d| d.kind == Warning).count()
     }
 
-    pub fn accumulated(&self) -> Vec<Diag> {
+    pub fn accumulated(&self) -> Vec<Diagnostic> {
         let inner = self.inner.read().expect("unable to acquire read lock");
         inner.clone()
     }
 }
 
-impl Default for DiagCtx {
+impl Default for DiagnosticContext {
     fn default() -> Self {
         Self::new()
     }

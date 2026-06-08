@@ -1,16 +1,23 @@
 use std::path::PathBuf;
 
-use crate::{ci::SourceMap, diagnostic::DiagCtx};
+use crate::ci::SourceMap;
+use cyc_diag::DiagnosticContext;
 
 pub fn run_ci<R: Send>(cfg: CanaryConfig, f: impl FnOnce(&Canary) -> R + Send) -> R {
-    todo!()
+    let ci = Canary {
+        cfg,
+        source_map: SourceMap::new(),
+        diag_ctx: DiagnosticContext::new(),
+    };
+
+    f(&ci)
 }
 
 #[derive(Debug)]
 pub struct Canary {
     pub cfg: CanaryConfig,
     pub source_map: SourceMap,
-    pub diag_ctx: DiagCtx,
+    pub diag_ctx: DiagnosticContext,
 }
 
 #[derive(Debug)]

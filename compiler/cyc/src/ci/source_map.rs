@@ -4,7 +4,9 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use crate::ir::source::{BytePos, SourceFile, Span};
+use cyc_lexer::Cursor;
+
+use cyc_ir::source::{BytePos, SourceFile, Span};
 
 /// Thread-safe registry of loaded source files.
 ///
@@ -125,36 +127,19 @@ fn source_file_from_contents(path: PathBuf, contents: String) -> SourceFile {
 /// Byte offsets of each line start. `lines[0]` is always `BytePos(0)` so every file
 /// (even empty) has line 0. A new line starts after each terminator.
 fn compute_line_starts(contents: &str) -> Vec<BytePos> {
-    let mut chars = contents.chars();
+    let tokens = Cursor::tokenize(contents);
     let mut pos = BytePos(0);
     let mut lines = vec![pos];
 
-    while let Some(c) = chars.next() {
-        match c {
-            CR_CHAR => {
-                if chars.clone().next() == Some(LF_CHAR) {
-                    chars.next();
-                    pos += BytePos(2);
-                } else {
-                    pos += BytePos(1);
-                }
-                lines.push(pos);
-            }
-            LF_CHAR => {
-                pos += BytePos(1);
-                lines.push(pos);
-            }
-            c => {
-                pos += BytePos::from_usize(c.len_utf8());
-            }
+    for tok in tokens {
+        pos += BytePos(tok.len);
+        if tok.is_newline() {
+            lines.push(pos);
         }
     }
 
     lines
 }
-
-const LF_CHAR: char = '\u{000A}';
-const CR_CHAR: char = '\u{000D}';
 
 #[cfg(test)]
 mod tests {

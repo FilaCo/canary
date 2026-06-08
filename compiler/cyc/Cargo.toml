@@ -1,12 +1,15 @@
 [package]
 name = "cyc"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2024"
 
 [dependencies]
 ariadne.workspace = true
 clap = { workspace = true, features = ["derive"] }
 ctrlc.workspace = true
+cyc_diag.workspace = true
+cyc_ir.workspace = true
+cyc_lexer.workspace = true
 cyc_macros.workspace = true
 indexmap.workspace = true
 memchr.workspace = true

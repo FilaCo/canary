@@ -1,12 +1,8 @@
-use std::str::Chars;
-
-use crate::{
-    ir::{
-        source::{BytePos, Span},
-        syntax::{LitConstKind, Symbol, Token, TokenKind},
-    },
-    parse::lexer::cursor::{self, Cursor},
+use cyc_ir::{
+    source::{BytePos, Span},
+    syntax::{LitConstKind, Symbol, Token, TokenKind},
 };
+use cyc_lexer::Cursor;
 
 use TokenKind::*;
 
@@ -52,31 +48,31 @@ impl<'src> Lexer<'src> {
             self.pos += BytePos(token.len);
 
             let kind = match token.kind {
-                cursor::TokenKind::Whitespace => {
+                cyc_lexer::TokenKind::Whitespace => {
                     preceded_by_ws = true;
                     continue;
                 }
 
-                cursor::TokenKind::Newline => Newline,
-                cursor::TokenKind::Semi => Semi,
+                cyc_lexer::TokenKind::Newline => Newline,
+                cyc_lexer::TokenKind::Semi => Semi,
 
-                cursor::TokenKind::Minus => Minus,
-                cursor::TokenKind::Plus => Plus,
-                cursor::TokenKind::Slash => Slash,
-                cursor::TokenKind::Star => Star,
+                cyc_lexer::TokenKind::Minus => Minus,
+                cyc_lexer::TokenKind::Plus => Plus,
+                cyc_lexer::TokenKind::Slash => Slash,
+                cyc_lexer::TokenKind::Star => Star,
 
-                cursor::TokenKind::LParen => LParen,
-                cursor::TokenKind::RParen => RParen,
+                cyc_lexer::TokenKind::LParen => LParen,
+                cyc_lexer::TokenKind::RParen => RParen,
 
-                cursor::TokenKind::LitConst { kind } => {
+                cyc_lexer::TokenKind::LitConst { kind } => {
                     self.cook_lexer_lit_const(start, self.pos, kind)
                 }
 
-                cursor::TokenKind::Unknown => {
+                cyc_lexer::TokenKind::Unknown => {
                     todo!()
                 }
 
-                cursor::TokenKind::EndOfFile => EndOfFile,
+                cyc_lexer::TokenKind::EndOfFile => EndOfFile,
             };
 
             let span = Span::new(start, self.pos);
@@ -88,11 +84,11 @@ impl<'src> Lexer<'src> {
         &self,
         start: BytePos,
         end: BytePos,
-        kind: cursor::LitConstKind,
+        kind: cyc_lexer::LitConstKind,
     ) -> TokenKind {
         match kind {
-            cursor::LitConstKind::Int { empty_int } => todo!(),
-            cursor::LitConstKind::Float { empty_exp } => todo!(),
+            cyc_lexer::LitConstKind::Int { empty_int } => todo!(),
+            cyc_lexer::LitConstKind::Float { empty_exp } => todo!(),
         }
         todo!()
     }

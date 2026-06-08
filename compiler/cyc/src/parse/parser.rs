@@ -1,4 +1,4 @@
-use crate::ir::{
+use cyc_ir::{
     source,
     syntax::{self, Expr, Stmt, Token},
 };

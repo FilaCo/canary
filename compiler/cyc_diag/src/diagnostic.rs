@@ -1,18 +1,17 @@
-use crate::{diagnostic::DiagCtx, ir::source::Span};
-
-use DiagKind::*;
+use DiagnosticKind::*;
+use cyc_ir::source::Span;
 
 #[derive(Debug, Clone)]
-pub struct Diag {
-    pub kind: DiagKind,
+pub struct Diagnostic {
+    pub kind: DiagnosticKind,
     pub msg: String,
     pub span: Span,
     pub labels: Vec<Label>,
     pub notes: Vec<String>,
 }
 
-impl Diag {
-    pub fn new(kind: DiagKind, span: Span, msg: impl Into<String>) -> Self {
+impl Diagnostic {
+    pub fn new(kind: DiagnosticKind, span: Span, msg: impl Into<String>) -> Self {
         Self {
             kind,
             span,
@@ -46,14 +45,10 @@ impl Diag {
         self.notes.push(msg.into());
         self
     }
-
-    pub fn accumulate(self, ctx: &DiagCtx) {
-        ctx.accumulate(self);
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DiagKind {
+pub enum DiagnosticKind {
     Error,
     Warning,
     Notice,

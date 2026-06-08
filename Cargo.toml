@@ -1,11 +1,21 @@
 [workspace]
 resolver = "3"
-members = ["cage", "compiler/*"]
+members = [
+    "cage",
+    "compiler/cyc",
+    "compiler/cyc_diag",
+    "compiler/cyc_ir",
+    "compiler/cyc_lexer",
+    "compiler/cyc_macros",
+]
 
 [workspace.dependencies]
 ariadne = { version = "0.6" }
 clap = { version = "4" }
 ctrlc = { version = "3" }
+cyc_diag = { path = "compiler/cyc_diag" }
+cyc_ir = { path = "compiler/cyc_ir" }
+cyc_lexer = { path = "compiler/cyc_lexer" }
 cyc_macros = { path = "compiler/cyc_macros" }
 darling = { version = "0.23" }
 expect-test = { version = "1" }

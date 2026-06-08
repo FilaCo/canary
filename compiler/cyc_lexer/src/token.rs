@@ -1,3 +1,5 @@
+use crate::TokenKind::*;
+
 /// Parsed token.
 /// It doesn't contain information about data that has been parsed,
 /// only the type of the token and its size.
@@ -5,6 +7,12 @@
 pub struct Token {
     pub kind: TokenKind,
     pub len: u32,
+}
+
+impl Token {
+    pub fn is_newline(&self) -> bool {
+        self.kind == Newline
+    }
 }
 
 /// Enum representing common lexeme types.

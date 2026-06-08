@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::ir::source::{BytePos, Span};
+use crate::source::{BytePos, Span};
 
 #[derive(Debug)]
 pub struct SourceFile {

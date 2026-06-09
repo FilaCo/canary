@@ -31,7 +31,7 @@ impl SourceMap {
     /// Loads the file at `path` and returns it, or returns the already-loaded
     /// file if it was added before.
     ///
-    /// Paths are matched verbatim — canonicalize first if relative paths or
+    /// Paths are matched verbatim - canonicalize first if relative paths or
     /// symlinks should dedup.
     pub fn add(&self, path: &Path) -> SourceMapResult<Arc<SourceFile>> {
         if let Some(src_file_ptr) = self.get_by_path(path) {
@@ -64,9 +64,8 @@ impl SourceMap {
     /// `[lo, hi)` into that file's `contents`.
     ///
     /// Unlike [`get_by_pos`](Self::get_by_pos), a span starting exactly at a
-    /// file's end (`span.lo == file.span.hi`) - where an end-of-file caret
-    /// points - resolves to that file with a zero-width range at
-    /// `contents.len()`, instead of falling off the end.
+    /// file's end (`span.lo == file.span.hi`) resolves to that file with a
+    /// zero-width range at `contents.len()`, instead of falling off the end.
     pub fn resolve_span(&self, span: Span) -> Option<(Arc<SourceFile>, Range<usize>)> {
         let inner = self.inner.read().expect("unable to acquire read lock");
         let n = inner.files.partition_point(|f| f.span.lo <= span.lo);
@@ -375,7 +374,9 @@ mod tests {
     fn resolve_span_overshoot_is_clamped_to_file_end() {
         // A malformed span whose hi runs past the file end is clamped, never OOB.
         let (map, a, _b) = two_file_map();
-        let (f, r) = map.resolve_span(Span::new(BytePos(1), BytePos(10))).unwrap();
+        let (f, r) = map
+            .resolve_span(Span::new(BytePos(1), BytePos(10)))
+            .unwrap();
         assert!(Arc::ptr_eq(&f, &a));
         assert_eq!(r, 1..3); // hi clamped to a.contents.len()
     }
@@ -397,13 +398,19 @@ mod tests {
         let (map, _a, b) = two_file_map();
         let past = b.span.hi + BytePos(1);
         assert!(map.resolve_span(Span::new(past, past)).is_none());
-        assert!(map.resolve_span(Span::new(BytePos(100), BytePos(100))).is_none());
+        assert!(
+            map.resolve_span(Span::new(BytePos(100), BytePos(100)))
+                .is_none()
+        );
     }
 
     #[test]
     fn resolve_span_empty_map_is_none() {
         let map = SourceMap::new();
-        assert!(map.resolve_span(Span::new(BytePos(0), BytePos(0))).is_none());
+        assert!(
+            map.resolve_span(Span::new(BytePos(0), BytePos(0)))
+                .is_none()
+        );
     }
 
     #[test]

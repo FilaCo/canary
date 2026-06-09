@@ -22,14 +22,10 @@ impl<'a> HumanReadableDiagnosticEmitter<'a> {
 
     /// Render a single diagnostic to a string (without trailing newline).
     fn render(&self, diag: &Diagnostic) -> String {
-        /*
-         * Collect every span the diagnostic points at, resolved into the file that
-         * owns it plus a file-local byte range, grouped per file so each file
-         * becomes one snippet. The primary span is listed first so its file
-         * leads the report.
-         */
+        // One snippet per file.
         let mut files: Vec<FileSnippet> = Vec::new();
 
+        // Primary span first so its file leads the report.
         self.push_annotation(
             &mut files,
             diag.primary_span,
@@ -77,9 +73,7 @@ impl<'a> HumanReadableDiagnosticEmitter<'a> {
 
         let anno = Annotation { kind, range, label };
 
-        // Files are keyed by their global start offset; the count is tiny (one
-        // diagnostic rarely spans more than a couple files), so a linear scan beats a
-        // map.
+        // Linear search is ok here, because files count per diagnostic is small.
         if let Some(existing) = files.iter_mut().find(|f| f.lo == source.span.lo.to_u32()) {
             existing.annotations.push(anno);
         } else {

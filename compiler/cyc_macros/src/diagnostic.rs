@@ -149,18 +149,14 @@ fn find_primary_span<'a>(
 
     match primary_spans.as_slice() {
         [span] => Ok(*span),
-        [] => {
-            return Err(syn::Error::new_spanned(
-                input,
-                "exactly one field must be marked `#[primary_span]`",
-            ));
-        }
-        _ => {
-            return Err(syn::Error::new(
-                primary_spans[1].span(),
-                "only one field may be marked `#[primary_span]`",
-            ));
-        }
+        [] => Err(syn::Error::new_spanned(
+            input,
+            "exactly one field must be marked `#[primary_span]`",
+        )),
+        _ => Err(syn::Error::new(
+            primary_spans[1].span(),
+            "only one field may be marked `#[primary_span]`",
+        )),
     }
 }
 
@@ -174,6 +170,10 @@ fn expand_struct(input: &syn::DeriveInput, data: &syn::DataStruct) -> syn::Resul
 
     let primary_span = find_primary_span(input, &fields)?;
 
+    // Bind every field by name so the message format string can interpolate
+    // them inline (e.g. `"unexpected token `{found}`"`).
+    let all_idents = fields.iter().map(|f| &f.ident);
+
     let builder_calls = fields.iter().filter_map(|f| {
         let field_ident = &f.ident;
         match &f.role {
@@ -181,10 +181,6 @@ fn expand_struct(input: &syn::DeriveInput, data: &syn::DataStruct) -> syn::Resul
             _ => None,
         }
     });
-
-    // Bind every field by name so the message format string can interpolate
-    // them inline (e.g. `"unexpected token `{found}`"`).
-    let all_idents = fields.iter().map(|f| &f.ident);
 
     let ident = &input.ident;
     let lvl = &header.lvl;
@@ -196,7 +192,7 @@ fn expand_struct(input: &syn::DeriveInput, data: &syn::DataStruct) -> syn::Resul
             fn from(value: #ident #ty_generics) -> Self {
                 #[allow(unused_variables, unused_mut)]
                 let #ident { #(#all_idents),* } = value;
-                #lvl(#primary_span, #msg)
+                #lvl(#primary_span, ::std::format!(#msg))
                 #(#builder_calls)*
             }
         }

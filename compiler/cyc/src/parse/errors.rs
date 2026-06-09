@@ -9,7 +9,7 @@ pub(super) struct NoDigitsLiteral {
 }
 
 #[derive(Diagnostic)]
-#[diag(error, "unknown start of token: {$escaped}")]
+#[diag(error, "unknown start of token: `{escaped}`")]
 pub(super) struct UnknownTokenStart {
     #[primary_span]
     pub span: Span,

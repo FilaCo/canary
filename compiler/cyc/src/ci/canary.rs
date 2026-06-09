@@ -3,9 +3,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::ci::{
-    EarlyDiagnosticContext, ErrorsReported, SourceMap,
-    diagnostic_emitter::HumanReadableDiagnosticEmitter,
+use crate::{
+    ci::{
+        EarlyDiagnosticContext, ErrorsReported, SourceMap,
+        diagnostic_emitter::HumanReadableDiagnosticEmitter,
+    },
+    parse::ParseSession,
 };
 use clap::ValueEnum;
 use cyc_diag::{DiagnosticContext, DiagnosticEmitter};
@@ -16,12 +19,15 @@ pub fn run_ci<R: Send>(
     f: impl FnOnce(&Canary) -> R + Send,
 ) -> Result<R, ErrorsReported> {
     let early_diag_ctx = EarlyDiagnosticContext::new();
+    let dcx = DiagnosticContext::new();
+    let sym_interner = SymbolInterner::new();
+    let psess = ParseSession::new(&sym_interner, &dcx);
     let ci = Canary {
         cfg,
         sm: SourceMap::new(),
         early_dcx: early_diag_ctx,
-        dcx: DiagnosticContext::new(),
-        sym_interner: SymbolInterner::new(),
+        dcx,
+        sym_interner,
     };
     let _emit_on_drop_guard = EmitOnDrop(&ci);
 
@@ -41,6 +47,12 @@ pub struct Canary {
     pub early_dcx: EarlyDiagnosticContext,
     pub dcx: DiagnosticContext,
     pub sym_interner: SymbolInterner,
+}
+
+impl Canary {
+    pub fn psess<'ci>(&'ci self) -> ParseSession<'ci> {
+        ParseSession::new(&self.sym_interner, &self.dcx)
+    }
 }
 
 #[derive(Debug)]
@@ -69,7 +81,7 @@ impl EmitKind {
 }
 
 #[derive(Debug)]
-struct EmitOnDrop<'a>(&'a Canary);
+struct EmitOnDrop<'ci>(&'ci Canary);
 
 impl Drop for EmitOnDrop<'_> {
     fn drop(&mut self) {

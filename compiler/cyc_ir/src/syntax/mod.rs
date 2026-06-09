@@ -1,7 +1,7 @@
-mod seed;
+mod score;
 mod symbol;
 mod token;
 
-pub use seed::*;
+pub use score::*;
 pub use symbol::*;
 pub use token::*;

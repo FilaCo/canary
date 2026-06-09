@@ -25,8 +25,8 @@ impl CanaryDriver {
             ))
         });
 
-        // TODO: replace hardcoded default with some meaningful value if possible
-        let seed_name = self.seed_name.unwrap_or(String::from("default"));
+        // TODO: replace hardcoded "default" with some meaningful value if possible
+        let score_name = self.score_name.unwrap_or(String::from("default"));
 
         let emit_targets = self
             .emit
@@ -35,7 +35,7 @@ impl CanaryDriver {
                 (
                     arg.kind,
                     arg.file.clone().unwrap_or_else(|| {
-                        PathBuf::from(format!("{}.{}", seed_name, arg.kind.default_file_ext()))
+                        PathBuf::from(format!("{}.{}", score_name, arg.kind.default_file_ext()))
                     }),
                 )
             })
@@ -43,12 +43,12 @@ impl CanaryDriver {
 
         let cfg = CanaryConfig {
             input,
-            seed_name,
+            seed_name: score_name,
             emit_targets,
         };
 
         match run_ci(cfg, |ci| {
-            let seed = passes::parse_seed(ci);
+            let _ = passes::parse_score(ci);
         }) {
             Ok(_) => ExitCode::SUCCESS,
             Err(_errors_reported) => ExitCode::FAILURE,

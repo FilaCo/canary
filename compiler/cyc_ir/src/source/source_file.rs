@@ -19,4 +19,14 @@ impl SourceFile {
             line_starts,
         }
     }
+
+    pub fn line_col(&self, pos: BytePos) -> (usize, usize) {
+        // `line_starts[0]` is the file base, so for any in-file `pos` the
+        // partition point is >= 1 and the `-1` never underflows.
+        let line = self.line_starts.partition_point(|&start| start <= pos) - 1;
+        let line_start = (self.line_starts[line] - self.span.lo).to_usize();
+        let offset = (pos - self.span.lo).to_usize();
+        let col = self.contents[line_start..offset].chars().count();
+        (line + 1, col + 1)
+    }
 }

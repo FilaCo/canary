@@ -1,6 +1,39 @@
+use std::ops::Index;
+
 use crate::{source::Span, syntax::Symbol};
 
 use TokenKind::*;
+
+#[derive(Clone, Debug)]
+pub struct Tokens {
+    inner: Vec<Token>,
+}
+
+impl Tokens {
+    pub fn new(tokens: impl Iterator<Item = Token>) -> Self {
+        Self {
+            inner: tokens.collect(),
+        }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = Token> {
+        self.inner.iter().copied()
+    }
+}
+
+impl From<Vec<Token>> for Tokens {
+    fn from(value: Vec<Token>) -> Self {
+        Self { inner: value }
+    }
+}
+
+impl Index<usize> for Tokens {
+    type Output = Token;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.inner[index]
+    }
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct Token {

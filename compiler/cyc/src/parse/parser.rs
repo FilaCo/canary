@@ -1,6 +1,6 @@
 use cyc_ir::{
     source::BytePos,
-    syntax::{CanaryFile, Expr, Stmt, StmtKind, Token},
+    syntax::{CanaryFile, Expr, Stmt, StmtKind, Token, TokenKind, Tokens},
 };
 
 use crate::parse::{Lexer, ParseSession};
@@ -8,20 +8,21 @@ use crate::parse::{Lexer, ParseSession};
 #[derive(Debug)]
 pub struct Parser<'ci> {
     psess: ParseSession<'ci>,
-    lexer: Lexer<'ci>,
+    tokens: &'ci Tokens,
     token: Token,
+    pos: usize,
 }
 
 impl<'ci> Parser<'ci> {
-    pub fn new(src: &'ci str, start_pos: BytePos, psess: ParseSession<'ci>) -> Self {
-        let mut lexer = Lexer::new(src, start_pos, psess);
-        let token = lexer.bump();
-
-        Self {
+    pub fn new(tokens: &'ci Tokens, psess: ParseSession<'ci>) -> Self {
+        let mut parser = Self {
             psess,
-            lexer,
-            token,
-        }
+            tokens,
+            token: Token::dummy(),
+            pos: 0,
+        };
+        let _ = parser.bump();
+        parser
     }
 
     /// ```ebnf
@@ -90,11 +91,20 @@ impl<'ci> Parser<'ci> {
     //     self.first().kind == expected
     // }
 
-    fn first(&self) -> &Token {
-        &self.token
+    fn first(&self) -> Token {
+        self.token
     }
 
     fn bump(&mut self) -> Token {
-        std::mem::replace(&mut self.token, self.lexer.bump())
+        if self.is_at_eof() {
+            return self.token;
+        }
+        let res = std::mem::replace(&mut self.token, self.tokens[self.pos]);
+        self.pos += 1;
+        res
+    }
+
+    fn is_at_eof(&self) -> bool {
+        matches!(self.token.kind, TokenKind::EndOfFile)
     }
 }

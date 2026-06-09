@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     ops::Range,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
@@ -8,6 +7,7 @@ use std::{
 use cyc_lexer::Cursor;
 
 use cyc_ir::source::{BytePos, SourceFile, Span};
+use indexmap::IndexMap;
 use thiserror::Error;
 
 /// Thread-safe registry of loaded source files.
@@ -45,11 +45,15 @@ impl SourceMap {
     /// (a position past the end, or the gap byte between two files).
     pub fn get_by_pos(&self, pos: BytePos) -> Option<Arc<SourceFile>> {
         let inner = self.inner.read().expect("unable to acquire read lock");
-        let n = inner.files.partition_point(|f| f.span.lo <= pos);
+        let n = inner
+            .files
+            .as_slice()
+            .partition_point(|_, f| f.span.lo <= pos);
         inner
             .files
-            .get(n.checked_sub(1)?)
-            .filter(|file| pos < file.span.hi)
+            .get_index(n.checked_sub(1)?)
+            .map(|(_, f)| f)
+            .filter(|f| pos < f.span.hi)
             .cloned()
     }
 
@@ -57,7 +61,7 @@ impl SourceMap {
     /// `None`. Does not touch disk - use [`add`](Self::add) to load.
     pub fn get_by_path(&self, path: &Path) -> Option<Arc<SourceFile>> {
         let inner = self.inner.read().expect("unable to acquire read lock");
-        inner.files_by_path.get(path).cloned()
+        inner.files.get(path).cloned()
     }
 
     /// Resolve a global span to its owning file and the file-local byte range
@@ -68,8 +72,11 @@ impl SourceMap {
     /// zero-width range at `contents.len()`, instead of falling off the end.
     pub fn resolve_span(&self, span: Span) -> Option<(Arc<SourceFile>, Range<usize>)> {
         let inner = self.inner.read().expect("unable to acquire read lock");
-        let n = inner.files.partition_point(|f| f.span.lo <= span.lo);
-        let file = inner.files.get(n.checked_sub(1)?)?;
+        let n = inner
+            .files
+            .as_slice()
+            .partition_point(|_, f| f.span.lo <= span.lo);
+        let (_, file) = inner.files.get_index(n.checked_sub(1)?)?;
 
         // `<=`, not `<`: accept the end-of-file boundary position.
         if span.lo > file.span.hi {
@@ -85,7 +92,7 @@ impl SourceMap {
 
     fn register(&self, mut src_file: SourceFile) -> Arc<SourceFile> {
         let mut inner = self.inner.write().expect("unable to acquire write lock");
-        if let Some(src_file_ptr) = inner.files_by_path.get(&src_file.path).cloned() {
+        if let Some(src_file_ptr) = inner.files.get(&src_file.path).cloned() {
             // Somebody added file while we were waiting for write lock
             return src_file_ptr;
         }
@@ -99,10 +106,9 @@ impl SourceMap {
 
         let src_file_ptr = Arc::new(src_file);
 
-        inner.files.push(src_file_ptr.clone());
         inner
-            .files_by_path
-            .insert(src_file_ptr.path.clone(), src_file_ptr.clone());
+            .files
+            .insert_full(src_file_ptr.path.clone(), src_file_ptr.clone());
 
         src_file_ptr
     }
@@ -116,16 +122,14 @@ impl Default for SourceMap {
 
 #[derive(Debug)]
 struct SourceMapImpl {
-    files: Vec<Arc<SourceFile>>,
-    files_by_path: HashMap<PathBuf, Arc<SourceFile>>,
+    files: IndexMap<PathBuf, Arc<SourceFile>>,
     bytes_len: BytePos,
 }
 
 impl SourceMapImpl {
     fn new() -> Self {
         Self {
-            files: Vec::new(),
-            files_by_path: HashMap::new(),
+            files: IndexMap::new(),
             bytes_len: BytePos(0),
         }
     }

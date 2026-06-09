@@ -1,6 +1,6 @@
 use cyc_ir::{
     source::{BytePos, Span},
-    syntax::{LitConstKind, LiteralConst, Symbol, Token, TokenKind},
+    syntax::{LitConstKind, LiteralConst, Symbol, Token, TokenKind, Tokens},
 };
 use cyc_lexer::Cursor;
 
@@ -9,7 +9,7 @@ use TokenKind::*;
 use crate::parse::{NoDigitsLiteral, ParseSession, UnknownTokenStart, escaped_char};
 
 #[derive(Debug)]
-pub(super) struct Lexer<'ci> {
+pub struct Lexer<'ci> {
     psess: ParseSession<'ci>,
     start_pos: BytePos,
     /// Byte position in the input stream.
@@ -27,6 +27,22 @@ pub(super) struct Lexer<'ci> {
 }
 
 impl<'ci> Lexer<'ci> {
+    pub fn tokenize(src: &'ci str, start_pos: BytePos, psess: ParseSession<'ci>) -> Tokens {
+        let mut lexer = Self::new(src, start_pos, psess);
+        let mut tokens = vec![];
+
+        loop {
+            let token = lexer.bump();
+            let is_eof = matches!(token.kind, TokenKind::EndOfFile);
+            tokens.push(token);
+            if is_eof {
+                break;
+            }
+        }
+
+        Tokens::new(tokens.into_iter())
+    }
+
     pub fn new(src: &'ci str, start_pos: BytePos, psess: ParseSession<'ci>) -> Self {
         let mut lexer = Self {
             psess,
@@ -172,7 +188,7 @@ impl<'ci> Lexer<'ci> {
     }
 
     fn symbol_from_to(&self, start: BytePos, end: BytePos) -> Symbol {
-        Symbol::intern(self.psess.sym_intern, self.str_from_to(start, end))
+        Symbol::intern(self.psess.sym_interner, self.str_from_to(start, end))
     }
 
     fn str_from_to(&self, start: BytePos, end: BytePos) -> &'ci str {

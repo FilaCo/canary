@@ -10,14 +10,14 @@ pub struct CanaryDriver {
     // Input source.
     pub input: PathBuf,
 
-    /// Specify the name of the seed.
+    /// Specify the name of the score.
     #[arg(long, value_name = "NAME")]
-    pub seed_name: Option<String>,
+    pub score_name: Option<String>,
 
     /// Kind of output for the compiler to emit
     /// Each KIND has the default FILE name:
-    /// * tokens - SEED_NAME.tok
-    /// * ast    - SEED_NAME.ast
+    /// * tokens - SCORE_NAME.tok
+    /// * ast    - SCORE_NAME.ast
     #[arg(long, value_name = "KIND[=FILE]", value_parser = parse_emit, verbatim_doc_comment)]
     pub emit: Vec<EmitArg>,
 }

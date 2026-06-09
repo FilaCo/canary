@@ -17,7 +17,7 @@ impl Symbol {
         Self(n as u32)
     }
 
-    fn to_usize(&self) -> usize {
+    fn to_usize(self) -> usize {
         self.0 as usize
     }
 }

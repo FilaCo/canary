@@ -331,6 +331,82 @@ mod tests {
     }
 
     #[test]
+    fn resolve_span_inside_file_is_local() {
+        let (map, a, b) = two_file_map(); // a=[0,3) "abc", b=[4,6) "de"
+        let (f, r) = map.resolve_span(Span::new(BytePos(1), BytePos(3))).unwrap();
+        assert!(Arc::ptr_eq(&f, &a));
+        assert_eq!(r, 1..3); // "bc"
+        let (f, r) = map.resolve_span(Span::new(BytePos(4), BytePos(5))).unwrap();
+        assert!(Arc::ptr_eq(&f, &b));
+        assert_eq!(r, 0..1); // "d", rebased to file-local
+    }
+
+    #[test]
+    fn resolve_span_non_empty_ending_at_eof() {
+        let (map, a, _b) = two_file_map();
+        // "c" = last byte of a, global [2, 3); hi sits exactly at a.span.hi.
+        let (f, r) = map.resolve_span(Span::new(BytePos(2), BytePos(3))).unwrap();
+        assert!(Arc::ptr_eq(&f, &a));
+        assert_eq!(r, 2..3);
+    }
+
+    #[test]
+    fn resolve_span_eof_is_zero_width_at_end() {
+        let (map, a, b) = two_file_map();
+        let (f, r) = map.resolve_span(Span::new(a.span.hi, a.span.hi)).unwrap();
+        assert!(Arc::ptr_eq(&f, &a));
+        assert_eq!(r, 3..3); // a.contents.len()
+        let (f, r) = map.resolve_span(Span::new(b.span.hi, b.span.hi)).unwrap();
+        assert!(Arc::ptr_eq(&f, &b));
+        assert_eq!(r, 2..2); // b.contents.len()
+    }
+
+    #[test]
+    fn resolve_span_gap_byte_belongs_to_preceding_file() {
+        // The 1-byte gap *is* the preceding file's `hi`, so (unlike get_by_pos)
+        // it resolves to that file as an end-of-file position.
+        let (map, a, _b) = two_file_map();
+        let (f, r) = map.resolve_span(Span::new(BytePos(3), BytePos(3))).unwrap();
+        assert!(Arc::ptr_eq(&f, &a));
+        assert_eq!(r, 3..3);
+    }
+
+    #[test]
+    fn resolve_span_overshoot_is_clamped_to_file_end() {
+        // A malformed span whose hi runs past the file end is clamped, never OOB.
+        let (map, a, _b) = two_file_map();
+        let (f, r) = map.resolve_span(Span::new(BytePos(1), BytePos(10))).unwrap();
+        assert!(Arc::ptr_eq(&f, &a));
+        assert_eq!(r, 1..3); // hi clamped to a.contents.len()
+    }
+
+    #[test]
+    fn resolve_span_uses_byte_offsets() {
+        // Ranges are UTF-8 byte offsets, not char indices.
+        let map = SourceMap::new();
+        let m = map.register(make_source_file("m.cy", "фx")); // 'ф' = 2 bytes, 'x' = 1
+        let (f, r) = map.resolve_span(Span::new(BytePos(2), BytePos(3))).unwrap();
+        assert!(Arc::ptr_eq(&f, &m));
+        assert_eq!(r, 2..3); // the 'x', after the 2-byte 'ф'
+        let (_f, r) = map.resolve_span(Span::new(BytePos(3), BytePos(3))).unwrap();
+        assert_eq!(r, 3..3); // EOF
+    }
+
+    #[test]
+    fn resolve_span_past_end_is_none() {
+        let (map, _a, b) = two_file_map();
+        let past = b.span.hi + BytePos(1);
+        assert!(map.resolve_span(Span::new(past, past)).is_none());
+        assert!(map.resolve_span(Span::new(BytePos(100), BytePos(100))).is_none());
+    }
+
+    #[test]
+    fn resolve_span_empty_map_is_none() {
+        let map = SourceMap::new();
+        assert!(map.resolve_span(Span::new(BytePos(0), BytePos(0))).is_none());
+    }
+
+    #[test]
     fn get_by_path_present_and_absent() {
         let map = SourceMap::new();
         let a = map.register(make_source_file("a.cy", "abc"));

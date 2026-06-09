@@ -27,8 +27,8 @@ impl Diagnostic {
         Self::new(Warning, primary_span, msg)
     }
 
-    pub fn notice(primary_span: Span, msg: impl Into<String>) -> Self {
-        Self::new(Notice, primary_span, msg)
+    pub fn note(primary_span: Span, msg: impl Into<String>) -> Self {
+        Self::new(Note, primary_span, msg)
     }
 
     pub fn label(mut self, span: Span, msg: impl Into<String>) -> Self {
@@ -44,7 +44,7 @@ impl Diagnostic {
 pub enum DiagnosticLevel {
     Error,
     Warning,
-    Notice,
+    Note,
 }
 
 #[derive(Debug, Clone)]

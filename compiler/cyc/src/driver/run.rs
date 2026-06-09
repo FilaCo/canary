@@ -1,8 +1,12 @@
 use std::process::{ExitCode, Termination};
 
+use cyc_ir::source::{BytePos, Span};
+use cyc_macros::Diagnostic;
+
 use crate::{
-    ci::{CanaryConfig, FatalErrorMarker, catch_fatal_errors, run_ci},
+    ci::{CanaryConfig, EarlyDiagnosticContext, FatalErrorMarker, catch_fatal_errors, run_ci},
     driver::CanaryDriver,
+    passes,
 };
 
 impl CanaryDriver {
@@ -11,22 +15,24 @@ impl CanaryDriver {
         catch_with_exit_code(|| self.run_impl())
     }
 
-    fn run_impl(self) {
-        let cfg = CanaryConfig { input: self.input };
+    fn run_impl(self) -> ExitCode {
+        let early_diag_ctx = EarlyDiagnosticContext::new();
 
-        run_ci(cfg, |ci| {
-            let input_file_path = ci.cfg.input.canonicalize().unwrap_or_else(|e| {
-                ci.early_diag_ctx.fatal(std::format!(
-                    "unable to canonicalize path `{}`: {e}",
-                    ci.cfg.input.to_string_lossy()
-                ))
-            });
-
-            let input_src_file = ci
-                .source_map
-                .add(&input_file_path)
-                .unwrap_or_else(|e| ci.early_diag_ctx.fatal(e));
+        let input = self.input.canonicalize().unwrap_or_else(|e| {
+            early_diag_ctx.fatal(std::format!(
+                "unable to canonicalize path `{}`: {e}",
+                self.input.to_string_lossy()
+            ))
         });
+
+        let cfg = CanaryConfig { input };
+
+        match run_ci(cfg, |ci| {
+            let seed = passes::parse_seed(ci);
+        }) {
+            Ok(_) => ExitCode::SUCCESS,
+            Err(_) => ExitCode::FAILURE,
+        }
     }
 }
 

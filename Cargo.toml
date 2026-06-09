@@ -10,7 +10,7 @@ members = [
 ]
 
 [workspace.dependencies]
-ariadne = { version = "0.6" }
+annotate-snippets = { version = "0.12" }
 clap = { version = "4" }
 ctrlc = { version = "3" }
 cyc_diag = { path = "compiler/cyc_diag" }

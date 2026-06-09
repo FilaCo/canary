@@ -1,3 +1,6 @@
+#[derive(Debug)]
+pub struct ErrorsReported;
+
 /// Used as a return value to signify a fatal error occurred.
 #[derive(Copy, Clone, Debug)]
 #[must_use]

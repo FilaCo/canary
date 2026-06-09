@@ -23,7 +23,7 @@ fn expand(input: TokenStream) -> syn::Result<TokenStream> {
 /// Parsed contents of `#[diag(lvl, "message")]`.
 #[derive(Debug)]
 struct DiagHeader {
-    /// `::cyc_diag::Diagnostic::{error|warning|notice}`
+    /// `::cyc_diag::Diagnostic::{error|warning|note}`
     lvl: TokenStream,
     /// The format string; bound field names can be used inline, e.g. `"{found}"`.
     msg: LitStr,
@@ -32,7 +32,7 @@ struct DiagHeader {
 /// Raw syntax of the `diag` attribute body: an ident, a comma, a string literal.
 #[derive(Debug)]
 struct DiagArgs {
-    /// `error|warning|notice`
+    /// `error|warning|note`
     lvl: Ident,
     msg: LitStr,
 }
@@ -60,12 +60,12 @@ fn parse_header(attrs: &[syn::Attribute]) -> syn::Result<DiagHeader> {
     let DiagArgs { lvl, msg } = attr.parse_args()?;
 
     let variant = match lvl.to_string().as_str() {
-        "error" | "warning" | "notice" => lvl.to_token_stream(),
+        "error" | "warning" | "note" => lvl.to_token_stream(),
         other => {
             return Err(syn::Error::new_spanned(
                 &lvl,
                 format!(
-                    "unknown diagnostic level `{other}`, expected `error`, `warning` or `notice`"
+                    "unknown diagnostic level `{other}`, expected `error`, `warning` or `note`"
                 ),
             ));
         }

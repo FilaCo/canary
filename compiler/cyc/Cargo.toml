@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2024"
 
 [dependencies]
-ariadne.workspace = true
+annotate-snippets.workspace = true
 clap = { workspace = true, features = ["derive"] }
 ctrlc.workspace = true
 cyc_diag.workspace = true

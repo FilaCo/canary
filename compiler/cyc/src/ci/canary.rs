@@ -5,6 +5,7 @@ use crate::ci::{
     diagnostic_emitter::HumanReadableDiagnosticEmitter,
 };
 use cyc_diag::{DiagnosticContext, DiagnosticEmitter};
+use cyc_ir::syntax::SymbolInterner;
 
 pub fn run_ci<R: Send>(
     cfg: CanaryConfig,
@@ -16,6 +17,7 @@ pub fn run_ci<R: Send>(
         sm: SourceMap::new(),
         early_diag_ctx,
         diag_ctx: DiagnosticContext::new(),
+        sym_interner: SymbolInterner::new(),
     };
     let _emit_on_drop_guard = EmitOnDrop(&ci);
 
@@ -34,6 +36,7 @@ pub struct Canary {
     pub sm: SourceMap,
     pub early_diag_ctx: EarlyDiagnosticContext,
     pub diag_ctx: DiagnosticContext,
+    pub sym_interner: SymbolInterner,
 }
 
 #[derive(Debug)]

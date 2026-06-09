@@ -1,4 +1,7 @@
-use std::process::{ExitCode, Termination};
+use std::{
+    path::PathBuf,
+    process::{ExitCode, Termination},
+};
 
 use crate::{
     ci::{CanaryConfig, EarlyDiagnosticContext, FatalErrorMarker, catch_fatal_errors, run_ci},
@@ -22,7 +25,27 @@ impl CanaryDriver {
             ))
         });
 
-        let cfg = CanaryConfig { input };
+        // TODO: replace hardcoded default with some meaningful value if possible
+        let seed_name = self.seed_name.unwrap_or(String::from("default"));
+
+        let emit_targets = self
+            .emit
+            .iter()
+            .map(|arg| {
+                (
+                    arg.kind,
+                    arg.file.clone().unwrap_or_else(|| {
+                        PathBuf::from(format!("{}.{}", seed_name, arg.kind.default_file_ext()))
+                    }),
+                )
+            })
+            .collect();
+
+        let cfg = CanaryConfig {
+            input,
+            seed_name,
+            emit_targets,
+        };
 
         match run_ci(cfg, |ci| {
             let seed = passes::parse_seed(ci);

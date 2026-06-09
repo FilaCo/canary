@@ -1,23 +1,48 @@
 use cyc_ir::{
     source::{BytePos, Span},
-    syntax::{LitConstKind, Symbol, Token, TokenKind},
+    syntax::{LitConstKind, LiteralConst, Symbol, Token, TokenKind},
 };
 use cyc_lexer::Cursor;
 
 use TokenKind::*;
 
+use crate::parse::{NoDigitsLiteral, ParseSession, UnknownTokenStart, escaped_char};
+
 #[derive(Debug)]
-pub(super) struct Lexer<'src> {
+pub(super) struct Lexer<'ci> {
+    psess: ParseSession<'ci>,
     start_pos: BytePos,
     /// Byte position in the input stream.
     pos: BytePos,
+    /// Source text to tokenize.
+    src: &'ci str,
     /// Cursor for getting lexer tokens.
-    cursor: Cursor<'src>,
+    cursor: Cursor<'ci>,
+    /// When a "unknown start of token: \u{a0}" has already been emitted earlier
+    /// in this file, it's safe to treat further occurrences of the non-breaking
+    /// space character as whitespace.
+    nbsp_is_ws: bool,
     /// Current token.
     token: Token,
 }
 
-impl<'src> Lexer<'src> {
+impl<'ci> Lexer<'ci> {
+    pub fn new(src: &'ci str, start_pos: BytePos, psess: ParseSession<'ci>) -> Self {
+        let mut lexer = Self {
+            psess,
+            start_pos,
+            pos: start_pos,
+            src,
+            cursor: Cursor::new(src),
+            nbsp_is_ws: false,
+            token: Token::dummy(),
+        };
+
+        let _ = lexer.bump();
+
+        lexer
+    }
+
     pub fn first(&self) -> &Token {
         &self.token
     }
@@ -42,7 +67,6 @@ impl<'src> Lexer<'src> {
         let mut swallow_next_invalid = 0;
         // Skip trivial (whitespace & comments) tokens
         loop {
-            let str_before = self.cursor.as_str();
             let token = self.cursor.bump_token();
             let start = self.pos;
             self.pos += BytePos(token.len);
@@ -65,11 +89,40 @@ impl<'src> Lexer<'src> {
                 cyc_lexer::TokenKind::RParen => RParen,
 
                 cyc_lexer::TokenKind::LitConst { kind } => {
-                    self.cook_lexer_lit_const(start, self.pos, kind)
+                    let (kind, sym) = self.cook_lexer_lit_const(start, self.pos, kind);
+                    TokenKind::LitConst(LiteralConst { kind, sym })
                 }
 
                 cyc_lexer::TokenKind::Unknown => {
-                    todo!()
+                    // Don't emit diagnostics for sequences of the same invalid token
+                    if swallow_next_invalid > 0 {
+                        swallow_next_invalid -= 1;
+                        continue;
+                    }
+                    let mut it = self.str_from_to_end(start).chars();
+                    let c = it.next().unwrap();
+                    if c == '\u{00a0}' {
+                        // If an error has already been reported on non-breaking
+                        // space characters earlier in the file, treat all
+                        // subsequent occurrences as whitespace.
+                        if self.nbsp_is_ws {
+                            preceded_by_ws = true;
+                            continue;
+                        }
+                        self.nbsp_is_ws = true;
+                    }
+                    let repeats = it.take_while(|c1| *c1 == c).count();
+                    self.psess.dcx.accumulate(UnknownTokenStart {
+                        span: Span::new(
+                            start,
+                            self.pos + BytePos::from_usize(repeats * c.len_utf8()),
+                        ),
+                        escaped: escaped_char(c),
+                    });
+
+                    swallow_next_invalid = repeats;
+                    preceded_by_ws = true;
+                    continue;
                 }
 
                 cyc_lexer::TokenKind::EndOfFile => EndOfFile,
@@ -85,11 +138,44 @@ impl<'src> Lexer<'src> {
         start: BytePos,
         end: BytePos,
         kind: cyc_lexer::LitConstKind,
-    ) -> TokenKind {
+    ) -> (LitConstKind, Symbol) {
         match kind {
-            cyc_lexer::LitConstKind::Int { empty_int } => todo!(),
-            cyc_lexer::LitConstKind::Float { empty_exp } => todo!(),
+            cyc_lexer::LitConstKind::Int { empty_int } => {
+                let mut kind = LitConstKind::Int;
+                if empty_int {
+                    self.psess.dcx.accumulate(NoDigitsLiteral {
+                        span: Span::new(start, end),
+                    });
+                    kind = LitConstKind::Error;
+                }
+                (kind, self.symbol_from_to(start, end))
+            }
+            cyc_lexer::LitConstKind::Float { empty_exp } => {
+                let mut kind = LitConstKind::Float;
+                if empty_exp {
+                    self.psess.dcx.accumulate(NoDigitsLiteral {
+                        span: Span::new(start, end),
+                    });
+                    kind = LitConstKind::Error;
+                }
+                (kind, self.symbol_from_to(start, end))
+            }
         }
-        todo!()
+    }
+
+    fn src_index(&self, pos: BytePos) -> usize {
+        (pos - self.start_pos).to_usize()
+    }
+
+    fn str_from_to_end(&self, start: BytePos) -> &'ci str {
+        &self.src[self.src_index(start)..]
+    }
+
+    fn symbol_from_to(&self, start: BytePos, end: BytePos) -> Symbol {
+        Symbol::intern(self.psess.sym_intern, self.str_from_to(start, end))
+    }
+
+    fn str_from_to(&self, start: BytePos, end: BytePos) -> &'ci str {
+        &self.src[self.src_index(start)..self.src_index(end)]
     }
 }

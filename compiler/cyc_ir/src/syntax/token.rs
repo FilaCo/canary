@@ -2,7 +2,7 @@ use crate::{source::Span, syntax::Symbol};
 
 use TokenKind::*;
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Token {
     pub kind: TokenKind,
     pub span: Span,
@@ -22,7 +22,7 @@ impl Token {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum TokenKind {
     /// `LF | (CR [LF])`
     Newline,
@@ -45,7 +45,7 @@ pub enum TokenKind {
     RParen,
 
     /// A literal constant value, e.g. `42` or `321.123`.
-    LitConst(LitConst),
+    LitConst(LiteralConst),
 
     /// Dummy token for parser needs.
     Dummy,
@@ -56,14 +56,15 @@ pub enum TokenKind {
     EndOfFile,
 }
 
-#[derive(Debug)]
-pub struct LitConst {
+#[derive(Clone, Copy, Debug)]
+pub struct LiteralConst {
     pub kind: LitConstKind,
     pub sym: Symbol,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum LitConstKind {
     Int,
     Float,
+    Error,
 }

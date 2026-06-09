@@ -1,22 +1,33 @@
 use cyc_ir::{
-    source,
-    syntax::{self, Expr, Stmt, Token},
+    source::BytePos,
+    syntax::{CanaryFile, Expr, Stmt, StmtKind, Token},
 };
 
-pub struct Parser {
-    // lexer: Lexer<'psess>,
+use crate::parse::{Lexer, ParseSession};
+
+#[derive(Debug)]
+pub struct Parser<'ci> {
+    psess: ParseSession<'ci>,
+    lexer: Lexer<'ci>,
     token: Token,
 }
 
-impl Parser {
-    pub fn new(file: source::SourceFile) -> Self {
-        todo!()
+impl<'ci> Parser<'ci> {
+    pub fn new(src: &'ci str, start_pos: BytePos, psess: ParseSession<'ci>) -> Self {
+        let mut lexer = Lexer::new(src, start_pos, psess);
+        let token = lexer.bump();
+
+        Self {
+            psess,
+            lexer,
+            token,
+        }
     }
 
     /// ```ebnf
     /// file = { NL } { stmt semi } EOF .
     /// ```
-    pub fn parse_file(&mut self) -> syntax::CanaryFile {
+    pub fn parse_file(&mut self) -> CanaryFile {
         // while self.eat(TokenType::NL) {}
 
         // let mut stmts = Vec::new();
@@ -35,7 +46,12 @@ impl Parser {
     /// stmt = expr .
     /// ```
     fn parse_stmt(&mut self) -> Stmt {
-        todo!()
+        let expr = self.parse_expr(0);
+        let span = expr.span;
+        Stmt {
+            kind: StmtKind::Expr(expr),
+            span,
+        }
     }
 
     fn parse_expr(&mut self, min_bp: u8) -> Expr {
@@ -79,7 +95,6 @@ impl Parser {
     }
 
     fn bump(&mut self) -> Token {
-        todo!()
-        // std::mem::replace(&mut self.token, self.lexer.bump())
+        std::mem::replace(&mut self.token, self.lexer.bump())
     }
 }

@@ -1,7 +1,10 @@
-use crate::{source::Span, syntax::LitConst};
+use crate::{source::Span, syntax::LiteralConst};
 
 #[derive(Debug)]
-pub struct Seed {}
+pub struct Seed {
+    // TODO: will be changed in the future.
+    pub file: CanaryFile,
+}
 
 #[derive(Debug)]
 pub struct Module {}
@@ -41,8 +44,9 @@ pub enum ExprKind {
         rparen_sp: Span,
     },
     LitConst {
-        value: LitConst,
+        value: LiteralConst,
     },
+    Error,
 }
 
 #[derive(Debug)]

@@ -5,6 +5,14 @@ use std::sync::{Arc, RwLock};
 pub struct Symbol(u32);
 
 impl Symbol {
+    pub fn intern(interner: &SymbolInterner, s: &str) -> Self {
+        interner.intern(s)
+    }
+
+    pub fn resolve(self, interner: &SymbolInterner) -> Arc<str> {
+        interner.resolve(self)
+    }
+
     fn from_usize(n: usize) -> Self {
         Self(n as u32)
     }

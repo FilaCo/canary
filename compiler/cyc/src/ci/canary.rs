@@ -1,9 +1,13 @@
-use std::path::PathBuf;
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 
 use crate::ci::{
     EarlyDiagnosticContext, ErrorsReported, SourceMap,
     diagnostic_emitter::HumanReadableDiagnosticEmitter,
 };
+use clap::ValueEnum;
 use cyc_diag::{DiagnosticContext, DiagnosticEmitter};
 use cyc_ir::syntax::SymbolInterner;
 
@@ -15,15 +19,15 @@ pub fn run_ci<R: Send>(
     let ci = Canary {
         cfg,
         sm: SourceMap::new(),
-        early_diag_ctx,
-        diag_ctx: DiagnosticContext::new(),
+        early_dcx: early_diag_ctx,
+        dcx: DiagnosticContext::new(),
         sym_interner: SymbolInterner::new(),
     };
     let _emit_on_drop_guard = EmitOnDrop(&ci);
 
     let res = f(&ci);
 
-    if ci.diag_ctx.has_errors() {
+    if ci.dcx.has_errors() {
         Err(ErrorsReported)
     } else {
         Ok(res)
@@ -34,14 +38,34 @@ pub fn run_ci<R: Send>(
 pub struct Canary {
     pub cfg: CanaryConfig,
     pub sm: SourceMap,
-    pub early_diag_ctx: EarlyDiagnosticContext,
-    pub diag_ctx: DiagnosticContext,
+    pub early_dcx: EarlyDiagnosticContext,
+    pub dcx: DiagnosticContext,
     pub sym_interner: SymbolInterner,
 }
 
 #[derive(Debug)]
 pub struct CanaryConfig {
     pub input: PathBuf,
+    pub emit_targets: HashMap<EmitKind, PathBuf>,
+    pub seed_name: String,
+}
+
+/// Kinds of output `cyc` can emit.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, ValueEnum)]
+pub enum EmitKind {
+    /// Emit the token stream after lexical analysis.
+    Tokens,
+    /// Emit the abstract syntax tree after parsing.
+    Ast,
+}
+
+impl EmitKind {
+    pub fn default_file_ext(&self) -> &'static str {
+        match self {
+            EmitKind::Tokens => "tok",
+            EmitKind::Ast => "ast",
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -49,6 +73,6 @@ struct EmitOnDrop<'a>(&'a Canary);
 
 impl Drop for EmitOnDrop<'_> {
     fn drop(&mut self) {
-        HumanReadableDiagnosticEmitter::new(&self.0.sm).emit_all(&self.0.diag_ctx.accumulated());
+        HumanReadableDiagnosticEmitter::new(&self.0.sm).emit_all(&self.0.dcx.accumulated());
     }
 }

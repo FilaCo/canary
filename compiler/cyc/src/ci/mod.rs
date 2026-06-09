@@ -1,6 +1,7 @@
 mod canary;
 mod diagnostic_emitter;
 mod early_diagnostic_context;
+mod emit_artifact;
 mod error;
 mod source_map;
 

@@ -8,24 +8,26 @@ use crate::ci::SourceMap;
 
 #[derive(Debug)]
 pub struct HumanReadableDiagnosticEmitter<'a> {
-    source_map: &'a SourceMap,
+    sm: &'a SourceMap,
     renderer: Renderer,
 }
 
 impl<'a> HumanReadableDiagnosticEmitter<'a> {
-    pub fn new(source_map: &'a SourceMap) -> Self {
+    pub fn new(sm: &'a SourceMap) -> Self {
         Self {
-            source_map,
+            sm,
             renderer: Renderer::styled().decor_style(DecorStyle::Unicode),
         }
     }
 
     /// Render a single diagnostic to a string (without trailing newline).
     fn render(&self, diag: &Diagnostic) -> String {
-        // Collect every span the diagnostic points at, resolved into the file
-        // that owns it plus a file-local byte range, grouped per file so each
-        // file becomes one snippet. The primary span is listed first so its
-        // file leads the report.
+        /*
+         * Collect every span the diagnostic points at, resolved into the file that
+         * owns it plus a file-local byte range, grouped per file so each file
+         * becomes one snippet. The primary span is listed first so its file
+         * leads the report.
+         */
         let mut files: Vec<FileSnippet> = Vec::new();
 
         self.push_annotation(
@@ -69,15 +71,15 @@ impl<'a> HumanReadableDiagnosticEmitter<'a> {
         kind: AnnotationKind,
         label: String,
     ) {
-        let Some((source, range)) = self.resolve(span) else {
+        let Some((source, range)) = self.sm.resolve_span(span) else {
             return;
         };
 
         let anno = Annotation { kind, range, label };
 
-        // Files are keyed by their global start offset; the count is tiny
-        // (one diagnostic rarely spans more than a couple files), so a linear
-        // scan beats a map.
+        // Files are keyed by their global start offset; the count is tiny (one
+        // diagnostic rarely spans more than a couple files), so a linear scan beats a
+        // map.
         if let Some(existing) = files.iter_mut().find(|f| f.lo == source.span.lo.to_u32()) {
             existing.annotations.push(anno);
         } else {
@@ -87,15 +89,6 @@ impl<'a> HumanReadableDiagnosticEmitter<'a> {
                 source,
             });
         }
-    }
-
-    /// Map a global span onto `(owning file, file-local byte range)`.
-    fn resolve(&self, span: Span) -> Option<(Arc<SourceFile>, Range<usize>)> {
-        let source = self.source_map.get_by_pos(span.lo)?;
-        let base = source.span.lo;
-        let lo = (span.lo - base).to_usize();
-        let hi = (span.hi - base).to_usize();
-        Some((source, lo..hi))
     }
 }
 

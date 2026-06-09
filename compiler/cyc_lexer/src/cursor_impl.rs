@@ -46,7 +46,8 @@ impl<'src> Cursor<'src> {
         self.chars.next()
     }
 
-    /// Eats symbols while predicate returns true or until the end of file is reached.
+    /// Eats symbols while predicate returns true or until the end of file is
+    /// reached.
     pub(super) fn eat_while(&mut self, predicate: impl Fn(char) -> bool) {
         while predicate(self.first()) && !self.is_at_eof() {
             self.bump();

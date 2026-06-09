@@ -25,11 +25,13 @@ fn expand(input: TokenStream) -> syn::Result<TokenStream> {
 struct DiagHeader {
     /// `::cyc_diag::Diagnostic::{error|warning|note}`
     lvl: TokenStream,
-    /// The format string; bound field names can be used inline, e.g. `"{found}"`.
+    /// The format string; bound field names can be used inline, e.g.
+    /// `"{found}"`.
     msg: LitStr,
 }
 
-/// Raw syntax of the `diag` attribute body: an ident, a comma, a string literal.
+/// Raw syntax of the `diag` attribute body: an ident, a comma, a string
+/// literal.
 #[derive(Debug)]
 struct DiagArgs {
     /// `error|warning|note`

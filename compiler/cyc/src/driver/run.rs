@@ -1,8 +1,5 @@
 use std::process::{ExitCode, Termination};
 
-use cyc_ir::source::{BytePos, Span};
-use cyc_macros::Diagnostic;
-
 use crate::{
     ci::{CanaryConfig, EarlyDiagnosticContext, FatalErrorMarker, catch_fatal_errors, run_ci},
     driver::CanaryDriver,
@@ -31,7 +28,7 @@ impl CanaryDriver {
             let seed = passes::parse_seed(ci);
         }) {
             Ok(_) => ExitCode::SUCCESS,
-            Err(_) => ExitCode::FAILURE,
+            Err(_errors_reported) => ExitCode::FAILURE,
         }
     }
 }

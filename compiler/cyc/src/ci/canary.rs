@@ -13,7 +13,7 @@ pub fn run_ci<R: Send>(
     let early_diag_ctx = EarlyDiagnosticContext::new();
     let ci = Canary {
         cfg,
-        source_map: SourceMap::new(),
+        sm: SourceMap::new(),
         early_diag_ctx,
         diag_ctx: DiagnosticContext::new(),
     };
@@ -31,7 +31,7 @@ pub fn run_ci<R: Send>(
 #[derive(Debug)]
 pub struct Canary {
     pub cfg: CanaryConfig,
-    pub source_map: SourceMap,
+    pub sm: SourceMap,
     pub early_diag_ctx: EarlyDiagnosticContext,
     pub diag_ctx: DiagnosticContext,
 }
@@ -41,11 +41,11 @@ pub struct CanaryConfig {
     pub input: PathBuf,
 }
 
+#[derive(Debug)]
 struct EmitOnDrop<'a>(&'a Canary);
 
 impl Drop for EmitOnDrop<'_> {
     fn drop(&mut self) {
-        HumanReadableDiagnosticEmitter::new(&self.0.source_map)
-            .emit_all(&self.0.diag_ctx.accumulated());
+        HumanReadableDiagnosticEmitter::new(&self.0.sm).emit_all(&self.0.diag_ctx.accumulated());
     }
 }

@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    ops::Range,
     path::{Path, PathBuf},
     sync::{Arc, RwLock},
 };
@@ -52,11 +53,35 @@ impl SourceMap {
             .cloned()
     }
 
-    /// Returns the already-loaded file for `path` (matched verbatim), or `None`.
-    /// Does not touch disk — use [`add`](Self::add) to load.
+    /// Returns the already-loaded file for `path` (matched verbatim), or
+    /// `None`. Does not touch disk - use [`add`](Self::add) to load.
     pub fn get_by_path(&self, path: &Path) -> Option<Arc<SourceFile>> {
         let inner = self.inner.read().expect("unable to acquire read lock");
         inner.files_by_path.get(path).cloned()
+    }
+
+    /// Resolve a global span to its owning file and the file-local byte range
+    /// `[lo, hi)` into that file's `contents`.
+    ///
+    /// Unlike [`get_by_pos`](Self::get_by_pos), a span starting exactly at a
+    /// file's end (`span.lo == file.span.hi`) - where an end-of-file caret
+    /// points - resolves to that file with a zero-width range at
+    /// `contents.len()`, instead of falling off the end.
+    pub fn resolve_span(&self, span: Span) -> Option<(Arc<SourceFile>, Range<usize>)> {
+        let inner = self.inner.read().expect("unable to acquire read lock");
+        let n = inner.files.partition_point(|f| f.span.lo <= span.lo);
+        let file = inner.files.get(n.checked_sub(1)?)?;
+
+        // `<=`, not `<`: accept the end-of-file boundary position.
+        if span.lo > file.span.hi {
+            return None;
+        }
+
+        let base = file.span.lo;
+        let lo = (span.lo - base).to_usize();
+        // `.min(len)` defends against a malformed span that overshoots the file.
+        let hi = (span.hi - base).to_usize().min(file.contents.len());
+        Some((file.clone(), lo..hi))
     }
 
     fn register(&self, mut src_file: SourceFile) -> Arc<SourceFile> {
@@ -133,15 +158,16 @@ fn read_source_file(path: &Path) -> SourceMapResult<SourceFile> {
     Ok(source_file_from_contents(path.to_path_buf(), contents))
 }
 
-/// Build a SourceFile with a *file-local* span `[0, len)` from in-memory contents.
+/// Build a SourceFile with a *file-local* span `[0, len)` from in-memory
+/// contents.
 fn source_file_from_contents(path: PathBuf, contents: String) -> SourceFile {
     let line_starts = compute_line_starts(&contents);
     let hi = BytePos::from_usize(contents.len());
     SourceFile::new(path, contents, Span::new(BytePos(0), hi), line_starts)
 }
 
-/// Byte offsets of each line start. `lines[0]` is always `BytePos(0)` so every file
-/// (even empty) has line 0. A new line starts after each terminator.
+/// Byte offsets of each line start. `lines[0]` is always `BytePos(0)` so every
+/// file (even empty) has line 0. A new line starts after each terminator.
 fn compute_line_starts(contents: &str) -> Vec<BytePos> {
     let tokens = Cursor::tokenize(contents);
     let mut pos = BytePos(0);

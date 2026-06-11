@@ -1,8 +1,8 @@
-use cyc_ir::syntax::Score;
+use cyc_ir::syntax::Nest;
 
 use crate::ci::{Canary, EmitArtifact, EmitKind};
 
-impl EmitArtifact for Score {
+impl EmitArtifact for Nest {
     const KIND: EmitKind = EmitKind::Ast;
 
     fn render(&self, ci: &Canary) -> String {

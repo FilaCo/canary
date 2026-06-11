@@ -1,7 +1,7 @@
 use crate::{source::Span, syntax::LiteralConst};
 
 #[derive(Debug)]
-pub struct Score {
+pub struct Nest {
     // TODO: will be changed in the future.
     pub file: CanaryFile,
 }

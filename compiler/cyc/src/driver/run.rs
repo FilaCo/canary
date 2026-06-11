@@ -48,7 +48,7 @@ impl CanaryDriver {
         };
 
         match run_ci(cfg, |ci| {
-            let _ = passes::parse_score(ci);
+            let _ = passes::parse_nest(ci);
         }) {
             Ok(_) => ExitCode::SUCCESS,
             Err(_errors_reported) => ExitCode::FAILURE,

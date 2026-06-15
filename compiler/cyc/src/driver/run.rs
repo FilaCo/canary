@@ -25,27 +25,7 @@ impl CanaryDriver {
             ))
         });
 
-        // TODO: replace hardcoded "default" with some meaningful value if possible
-        let score_name = self.nest_name.unwrap_or(String::from("default"));
-
-        let dump_kinds = self
-            .dump
-            .iter()
-            .map(|arg| {
-                (
-                    arg.kind,
-                    arg.file.clone().unwrap_or_else(|| {
-                        PathBuf::from(format!("{}.{}", score_name, arg.kind.default_file_ext()))
-                    }),
-                )
-            })
-            .collect();
-
-        let cfg = CanaryConfig {
-            input,
-            nest_name: score_name,
-            dump: dump_kinds,
-        };
+        let cfg = CanaryConfig { input };
 
         match run_ci(cfg, |ci| {
             let _ = passes::parse_nest(ci);

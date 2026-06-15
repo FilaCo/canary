@@ -21,7 +21,6 @@ pub fn run_ci<R: Send>(
     let early_diag_ctx = EarlyDiagnosticContext::new();
     let dcx = DiagnosticContext::new();
     let sym_interner = SymbolInterner::new();
-    let psess = ParseSession::new(&sym_interner, &dcx);
     let ci = Canary {
         cfg,
         sm: SourceMap::new(),
@@ -58,26 +57,6 @@ impl Canary {
 #[derive(Debug)]
 pub struct CanaryConfig {
     pub input: PathBuf,
-    pub dump: Vec<DumpKind>,
-    pub nest_name: String,
-}
-
-/// Kinds of output `cyc` can emit.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, ValueEnum)]
-pub enum DumpKind {
-    /// Emit the token stream after lexical analysis.
-    Tokens,
-    /// Emit the abstract syntax tree after parsing.
-    Ast,
-}
-
-impl DumpKind {
-    pub fn default_file_ext(&self) -> &'static str {
-        match self {
-            DumpKind::Tokens => "tok",
-            DumpKind::Ast => "ast",
-        }
-    }
 }
 
 #[derive(Debug)]

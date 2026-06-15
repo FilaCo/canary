@@ -58,24 +58,24 @@ impl Canary {
 #[derive(Debug)]
 pub struct CanaryConfig {
     pub input: PathBuf,
-    pub emit_targets: HashMap<EmitKind, PathBuf>,
-    pub seed_name: String,
+    pub dump: Vec<DumpKind>,
+    pub nest_name: String,
 }
 
 /// Kinds of output `cyc` can emit.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, ValueEnum)]
-pub enum EmitKind {
+pub enum DumpKind {
     /// Emit the token stream after lexical analysis.
     Tokens,
     /// Emit the abstract syntax tree after parsing.
     Ast,
 }
 
-impl EmitKind {
+impl DumpKind {
     pub fn default_file_ext(&self) -> &'static str {
         match self {
-            EmitKind::Tokens => "tok",
-            EmitKind::Ast => "ast",
+            DumpKind::Tokens => "tok",
+            DumpKind::Ast => "ast",
         }
     }
 }

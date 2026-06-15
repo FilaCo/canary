@@ -2,10 +2,10 @@ use std::fmt::Write;
 
 use cyc_ir::syntax::{TokenKind, Tokens};
 
-use crate::ci::{Canary, EmitArtifact, EmitKind};
+use crate::ci::{Canary, EmitArtifact, DumpKind};
 
 impl EmitArtifact for Tokens {
-    const KIND: EmitKind = EmitKind::Tokens;
+    const KIND: DumpKind = DumpKind::Tokens;
 
     fn render(&self, ci: &Canary) -> String {
         let sm = &ci.sm;

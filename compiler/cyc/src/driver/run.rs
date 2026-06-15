@@ -26,10 +26,10 @@ impl CanaryDriver {
         });
 
         // TODO: replace hardcoded "default" with some meaningful value if possible
-        let score_name = self.score_name.unwrap_or(String::from("default"));
+        let score_name = self.nest_name.unwrap_or(String::from("default"));
 
-        let emit_targets = self
-            .emit
+        let dump_kinds = self
+            .dump
             .iter()
             .map(|arg| {
                 (
@@ -43,8 +43,8 @@ impl CanaryDriver {
 
         let cfg = CanaryConfig {
             input,
-            seed_name: score_name,
-            emit_targets,
+            nest_name: score_name,
+            dump: dump_kinds,
         };
 
         match run_ci(cfg, |ci| {

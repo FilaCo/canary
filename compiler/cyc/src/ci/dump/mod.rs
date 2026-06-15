@@ -1,10 +1,10 @@
-use crate::ci::{Canary, EmitKind};
+use crate::ci::{Canary, DumpKind};
 
 mod ast;
 mod tokens;
 
 pub trait EmitArtifact {
-    const KIND: EmitKind;
+    const KIND: DumpKind;
     fn render(&self, ci: &Canary) -> String;
 }
 

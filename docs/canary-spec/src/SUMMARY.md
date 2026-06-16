@@ -5,3 +5,4 @@
 # Syntax and grammar
 
 - [Notation](./notation.md)
+- [Syntax grammar](./syntax-grammar.md)

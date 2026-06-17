@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{ArgAction, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(version, propagate_version = true)]
@@ -6,7 +6,12 @@ use clap::{Parser, Subcommand};
 pub(super) struct CanaryCli {
     #[command(subcommand)]
     pub(super) cmd: Option<CanaryCommand>,
+    /// Use verbose output
+    #[arg(short, long, action = ArgAction::Count, global = true)]
+    pub(super) verbose: u8,
 }
 
 #[derive(Subcommand, Debug)]
-pub(super) enum CanaryCommand {}
+pub(super) enum CanaryCommand {
+    Test,
+}

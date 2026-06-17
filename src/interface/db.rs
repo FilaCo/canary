@@ -1,2 +1,2 @@
 #[salsa::db]
-pub trait CanaryDb {}
+pub trait CanaryDb: salsa::Database {}

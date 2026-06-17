@@ -6,9 +6,7 @@ use std::{
 
 use clap::Parser;
 
-use crate::{
-    CanaryCli, CanaryCommand, EarlyDiagnosticContext, FatalErrorMarker, catch_fatal_errors,
-};
+use crate::{CanaryCli, EarlyDiagnosticContext, FatalErrorMarker, catch_fatal_errors};
 
 pub fn run() -> ExitCode {
     install_ice_hook();
@@ -18,7 +16,7 @@ pub fn run() -> ExitCode {
 
         let (exit_code, elapsed) = measure_duration(run_driver);
         println!(
-            "{} in {:.2}s",
+            "{} in {:.3}s",
             "Finished".bright_green().bold(),
             elapsed.as_secs_f32()
         );
@@ -53,12 +51,12 @@ fn run_repl() -> ExitCode {
             .read_line(&mut line)
             .unwrap_or_else(|e| early_diag_ctx.fatal(format!("unable to read line: {e}")));
 
-        line.clear();
-
         if bytes_read == 0 {
             println!();
             break;
         }
+
+        line.clear();
     }
     ExitCode::SUCCESS
 }

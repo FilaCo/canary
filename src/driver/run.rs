@@ -1,6 +1,7 @@
 use std::{
     io::{Write, stdin, stdout},
     process::{ExitCode, Termination},
+    sync::Arc,
     time::{Duration, Instant},
 };
 
@@ -8,8 +9,9 @@ use clap::Parser;
 
 use crate::{
     FatalErrorMarker, catch_fatal_errors,
-    driver::CanaryCli,
-    interface::{CanaryDb, CanaryDbImpl},
+    driver::{CanaryCli, report_diag},
+    interface::{CanaryDb, CanaryDbImpl, parse_submission},
+    ir::source,
 };
 
 pub fn run() -> ExitCode {
@@ -41,7 +43,7 @@ fn run_repl(_: CanaryCli) -> ExitCode {
     let db = CanaryDbImpl::default();
 
     let input = stdin();
-    let mut line = String::new();
+    let mut buf = String::new();
     let mut output = stdout();
     loop {
         write!(&mut output, "🐣 >>> ").unwrap_or_else(|e| {
@@ -52,7 +54,7 @@ fn run_repl(_: CanaryCli) -> ExitCode {
         });
 
         let bytes_read = input
-            .read_line(&mut line)
+            .read_line(&mut buf)
             .unwrap_or_else(|e| db.report_fatal(format_args!("unable to read line: {e}")));
 
         if bytes_read == 0 {
@@ -60,7 +62,13 @@ fn run_repl(_: CanaryCli) -> ExitCode {
             break;
         }
 
-        line.clear();
+        let submission = source::Submission::new(&db, Arc::from(buf.clone()));
+
+        parse_submission(&db, submission);
+
+        report_diag(parse_submission::accumulated(&db, submission));
+
+        buf.clear();
     }
     ExitCode::SUCCESS
 }

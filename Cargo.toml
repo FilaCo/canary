@@ -3,20 +3,22 @@ name = "canary"
 version = "0.1.0"
 edition = "2024"
 
+[workspace]
+resolver = "3"
+members = ["./", "crates/*"]
+
+[workspace.dependencies]
+
 [dependencies]
 annotate-snippets = { version = "0.12" }
 clap = { version = "4" }
 ctrlc = { version = "3" }
-darling = { version = "0.23" }
 expect-test = { version = "1" }
 indexmap = { version = "2" }
 insta = { version = "1" }
 memchr = { version = "2" }
-proc-macro2 = { version = "1" }
-quote = { version = "1" }
 rowan = { version = "0.16" }
 salsa = { version = "0.27" }
-syn = { version = "2" }
 thiserror = { version = "2" }
 unicode-ident = { version = "1" }
 yansi = { version = "1" }

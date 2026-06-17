@@ -1,9 +1,8 @@
-mod cli;
+pub mod driver;
 mod early_diag_ctx;
 mod fatal_error;
-mod run;
+pub mod interface;
+pub mod ir;
 
-pub(crate) use cli::*;
 pub(crate) use early_diag_ctx::*;
 pub(crate) use fatal_error::*;
-pub use run::*;

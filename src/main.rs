@@ -1,7 +1,5 @@
 use std::process::ExitCode;
 
-use canary::run;
-
 fn main() -> ExitCode {
-    run()
+    canary::driver::run()
 }

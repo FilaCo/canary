@@ -6,7 +6,7 @@ use std::{
 
 use clap::Parser;
 
-use crate::{CanaryCli, EarlyDiagnosticContext, FatalErrorMarker, catch_fatal_errors};
+use crate::{EarlyDiagnosticContext, FatalErrorMarker, catch_fatal_errors, driver::CanaryCli};
 
 pub fn run() -> ExitCode {
     install_ice_hook();

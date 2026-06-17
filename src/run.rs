@@ -1,22 +1,26 @@
 use std::{
+    io::{Write, stdin, stdout},
     process::{ExitCode, Termination},
     time::{Duration, Instant},
 };
 
 use clap::Parser;
-use yansi::Paint;
 
-use crate::{FatalErrorMarker, catch_fatal_errors, cli::CanaryCli};
+use crate::{
+    CanaryCli, CanaryCommand, EarlyDiagnosticContext, FatalErrorMarker, catch_fatal_errors,
+};
 
 pub fn run() -> ExitCode {
     install_ice_hook();
 
     catch_with_exit_code(|| {
+        use yansi::Paint;
+
         let (exit_code, elapsed) = measure_duration(run_driver);
         println!(
             "{} in {:.2}s",
-            "Finished".bold().bright_green(),
-            elapsed.as_secs_f64()
+            "Finished".bright_green().bold(),
+            elapsed.as_secs_f32()
         );
         exit_code
     })
@@ -24,6 +28,38 @@ pub fn run() -> ExitCode {
 
 fn run_driver() -> ExitCode {
     let cli = CanaryCli::parse();
+
+    match &cli.cmd {
+        Some(_) => todo!(),
+        None => run_repl(),
+    }
+}
+
+fn run_repl() -> ExitCode {
+    let early_diag_ctx = EarlyDiagnosticContext;
+
+    let input = stdin();
+    let mut line = String::new();
+    let mut output = stdout();
+    loop {
+        write!(&mut output, "🐣 >>> ").unwrap_or_else(|e| {
+            early_diag_ctx.fatal(format!("unable to write prompt invitation: {e}"))
+        });
+        output.flush().unwrap_or_else(|e| {
+            early_diag_ctx.fatal(format!("unable to flush output writer: {e}"))
+        });
+
+        let bytes_read = input
+            .read_line(&mut line)
+            .unwrap_or_else(|e| early_diag_ctx.fatal(format!("unable to read line: {e}")));
+
+        line.clear();
+
+        if bytes_read == 0 {
+            println!();
+            break;
+        }
+    }
     ExitCode::SUCCESS
 }
 

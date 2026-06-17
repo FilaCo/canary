@@ -6,7 +6,11 @@ use std::{
 
 use clap::Parser;
 
-use crate::{EarlyDiagnosticContext, FatalErrorMarker, catch_fatal_errors, driver::CanaryCli};
+use crate::{
+    FatalErrorMarker, catch_fatal_errors,
+    driver::CanaryCli,
+    interface::{CanaryDb, CanaryDbImpl},
+};
 
 pub fn run() -> ExitCode {
     install_ice_hook();
@@ -29,27 +33,27 @@ fn run_driver() -> ExitCode {
 
     match &cli.cmd {
         Some(_) => todo!(),
-        None => run_repl(),
+        None => run_repl(cli),
     }
 }
 
-fn run_repl() -> ExitCode {
-    let early_diag_ctx = EarlyDiagnosticContext;
+fn run_repl(_: CanaryCli) -> ExitCode {
+    let db = CanaryDbImpl::default();
 
     let input = stdin();
     let mut line = String::new();
     let mut output = stdout();
     loop {
         write!(&mut output, "🐣 >>> ").unwrap_or_else(|e| {
-            early_diag_ctx.fatal(format!("unable to write prompt invitation: {e}"))
+            db.report_fatal(format_args!("unable to write prompt invitation: {e}"))
         });
         output.flush().unwrap_or_else(|e| {
-            early_diag_ctx.fatal(format!("unable to flush output writer: {e}"))
+            db.report_fatal(format_args!("unable to flush output writer: {e}"))
         });
 
         let bytes_read = input
             .read_line(&mut line)
-            .unwrap_or_else(|e| early_diag_ctx.fatal(format!("unable to read line: {e}")));
+            .unwrap_or_else(|e| db.report_fatal(format_args!("unable to read line: {e}")));
 
         if bytes_read == 0 {
             println!();

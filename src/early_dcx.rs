@@ -1,12 +1,14 @@
+use std::fmt::Arguments;
+
 use yansi::Paint;
 
 use crate::FatalError;
 
 #[derive(Debug)]
-pub struct EarlyDiagnosticContext;
+pub(super) struct EarlyDcx;
 
-impl EarlyDiagnosticContext {
-    pub fn fatal(&self, msg: impl std::fmt::Display) -> ! {
+impl EarlyDcx {
+    pub fn report_fatal(&self, msg: Arguments<'_>) -> ! {
         eprintln!("{}: {msg}", "error".bright_red().bold());
         FatalError.raise()
     }

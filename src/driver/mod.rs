@@ -1,5 +1,5 @@
 mod cli;
 mod run;
 
-pub(super) use cli::*;
+use cli::*;
 pub use run::*;

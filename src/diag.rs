@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
 #[salsa::accumulator]
+#[derive(Debug)]
 pub struct Diag {
     pub lvl: DiagLvl,
     pub msg: String,

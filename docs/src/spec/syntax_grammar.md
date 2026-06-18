@@ -27,13 +27,12 @@ decl = egg_decl
      | extend_decl .
 
 egg_decl = "egg" simple_ident [ [ NL ] egg_body ] .
-egg_body = "{" { NL } { stmt semi } { NL } "}" .
+egg_body = "{" { NL } [ stmts ] { NL } "}" .
 
-trait_decl = [ vis_mod ] "trait" simple_ident .
+trait_decl = [ vis_mod ] "trait" simple_ident [ typeParams ] [ upper_bound ] [ [ NL ] trait_body ] .
+trait_body = "{" "}" .
 
 class_decl = [ vis_mod ] "class" simple_ident .
-
-binding_stmt = expr assign_op expr .
 
 expr         = range_expr .
 range_expr   = disj_expr [ range_op [ disj_expr ] ]
@@ -48,13 +47,16 @@ factor_expr  = prefix_expr { factor_op { NL } prefix_expr } .
 prefix_expr  = prefix_op prefix_expr | postfix_expr .
 postfix_expr = primary_expr { call_suffix | index_suffix | field_suffix | generic_suffix } .
 primary_expr = paren_expr
-             | lit_expr .
+             | lit_expr
+             | ref_expr .
 
 paren_expr = "(" { NL } expr { NL } ")" .
 lit_expr   = IntLit 
            | FloatLit
            | "true"
            | "false" .
+
+ref_expr = simple_ident .
 
 range_op   = ".." | "..=" .
 eq_op      = "==" | "!=" .
@@ -68,9 +70,10 @@ index_suffix   = "[" { NL } expr { NL } "]" .
 field_suffix   = "." simple_ident .
 generic_suffix = "::" "[" { NL } type { "," { NL } type } [ "," ] "]" .
 
-type = ident [ "[" { NL } type { "," { NL } type } [ "," ] "]" ] .
 
 vis_mod = "pub" .
+bind_mod = "const" | "mut" .
+type_mod = "?" .
 
 ident        = simple_ident { "::" simple_ident } .
 simple_ident = Ident | RawIdent .

@@ -156,6 +156,22 @@ pub enum SyntaxKind {
     ExtendKw,
     /// `trait`
     TraitKw,
+    /// `match`
+    MatchKw,
+    /// `if`
+    IfKw,
+    /// `else`
+    ElseKw,
+    /// `elif`
+    ElifKw,
+    /// `loop`
+    LoopKw,
+    /// `for`
+    ForKw,
+    /// `in`
+    InKw,
+    /// `while`
+    WhileKw,
 
     /// An identifier or soft keyword e.g. `foo` or `class`.
     Ident,

@@ -1,7 +1,6 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, salsa::Update)]
 #[repr(u16)]
 pub enum SyntaxKind {
-    // Tokens
     /// A block comment, e.g. `/* block comment */`.
     ///
     /// Block comments can be recursive, so a sequence like `/* /* */`
@@ -18,24 +17,40 @@ pub enum SyntaxKind {
     Whitespace,
 
     /// `LF | ( CR [ LF ] ) .`
-    Newline,
-    /// `;`.
+    NL,
+    /// `;`
     Semi,
-    /// `,`.
+    /// `,`
     Comma,
-    /// `:`.
+    /// `:`
     Colon,
-    /// `.`.
+    /// `.`
     Dot,
+    /// `..`
+    Dot2,
+    /// `...`
+    Dot3,
+    /// `..=`
+    Dot2Eq,
 
+    /// `&`
+    Amp,
+    /// `|`
+    Pipe,
     /// `=`
     Eq,
     /// `!`
     Excl,
+    /// `!=`
+    Ne,
     /// `>`
     Gt,
+    /// `>=`
+    Ge,
     /// `<`
     Lt,
+    /// `<=`
+    Le,
     /// `-`
     Minus,
     /// `+`
@@ -44,11 +59,51 @@ pub enum SyntaxKind {
     Slash,
     /// `*`
     Star,
+    /// `%`
+    Percent,
     /// `~`
     Tilde,
+    /// `<<`
+    Shl,
+    /// `>>`
+    Shr,
+    /// `<=>`
+    Spaceship,
 
+    /// `:=`
+    Assign,
+    /// `&=`
+    AmpEq,
+    /// `|=`
+    PipeEq,
+    /// `-=`
+    MinusEq,
+    /// `+=`
+    PlusEq,
+    /// `/=`
+    SlashEq,
+    /// `*=`
+    StarEq,
+    /// `%=`
+    PercentEq,
+    /// `~=`
+    TildeEq,
+    /// `<<=`
+    ShlEq,
+    /// `>>=`
+    ShrEq,
+
+    /// `++`
+    Inc,
+    /// `--`
+    Dec,
+
+    /// `->`
+    Arrow,
     /// `?`
     Quest,
+    /// `::`
+    Colon2,
 
     /// `{`
     LBrace,
@@ -63,15 +118,68 @@ pub enum SyntaxKind {
     /// `)`
     RParen,
 
-    /// An identifier or keyword e.g. `foo` or `class`.
-    Ident,
+    /// `as`
+    AsKw,
+    /// `true`
+    TrueKw,
+    /// `false`
+    FalseKw,
+    /// `enum`
+    EnumKw,
+    /// `class`
+    ClassKw,
+    /// `struct`
+    StructKw,
+    /// `fn`
+    FnKw,
+    /// `egg`
+    EggKw,
+    /// `pub`
+    PubKw,
+    /// `mut`
+    MutKw,
+    /// `throw`
+    ThrowKw,
+    /// `catch`
+    CatchKw,
+    /// `with`
+    WithKw,
+    /// `const`
+    ConstKw,
+    /// `use`
+    UseKw,
+    /// `type`
+    TypeKw,
+    /// `return`
+    ReturnKw,
+    /// `extend`
+    ExtendKw,
+    /// `trait`
+    TraitKw,
 
-    /// A literal constant value, e.g. `123` or `"hello"`.
-    Literal,
+    /// An identifier or soft keyword e.g. `foo` or `class`.
+    Ident,
+    /// An escaped identifier, e.g. `` `ident` ``
+    RawIdent,
+
+    /// An integer literal constant, e.g. `123` or `0xFF`.
+    IntLit,
+    /// A floating-point literal constant, e.g. `1.0` or `1e9`.
+    FloatLit,
 
     /// Unknown token, not expected by the lexer, e.g. "№".
     Unknown,
 
     /// End of input.
-    Eof,
+    EOF,
+
+    // Nodes
+    ClassDecl,
+    StructDecl,
+    EnumDecl,
+    FnDecl,
+    ParenExpr,
+    LitConstExpr,
+    ExprStmt,
+    File,
 }

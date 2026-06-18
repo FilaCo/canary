@@ -42,7 +42,6 @@ A general-purpose language for scripting, tools, and applications. Statically ty
 - `[ ]` generics;
 - `->` returns;
 - `<:` subtyping;
-- `and`/`or`/`not`.
 
 ## Ideal role
 

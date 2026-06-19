@@ -39,6 +39,10 @@ pub enum SyntaxKind {
     Pipe,
     /// `=`
     Eq,
+    /// `==`
+    Eq2,
+    /// `===`
+    Eq3,
     /// `!`
     Excl,
     /// `!=`

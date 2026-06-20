@@ -7,14 +7,14 @@ The grammar below replaces some lexical grammar rules with explicit literals (wh
 1. as a statement terminator;
 2. inside a block, before/after statements.
 
-In all other positions (after binary/prefix operators, after `(` `[` `{` `,` `::`) the parser skips `NL`.
+In all other positions (after binary/prefix operators, after `(` `[` `{` `,` `::` `|`) the parser skips `NL`.
 
 ```ebnf
-(* ===== File ===== *)
+# File
 
 file = [ stmts ] EOF .
 
-(* ===== Statements ===== *)
+# Statements
 
 stmts      = stmt { terminator stmt } [ terminator ] .
 terminator = ( ";" | NL ) { NL } .
@@ -29,7 +29,7 @@ use_stmt  = "use" use_tree .
 use_tree  = ident [ "." "*" | "." use_group | "as" simple_ident ] .
 use_group = "{" [ use_tree { "," use_tree } [ "," ] ] "}" .
 
-(* ===== Declarations ===== *)
+# Declarations
 
 decl = egg_decl
      | nominal_decl
@@ -51,7 +51,7 @@ enum_decl  = [ vis_mod ] "enum" simple_ident [ generics ] [ bounds ] [ where_cla
 member_body = "{" [ member_decls ] "}" .
 enum_body   = "{" [ enum_ctors ] [ member_decls ] "}" .
 
-enum_ctors   = enum_ctor { "," enum_ctor } [ "," ] .
+enum_ctors   = [ "|" ] enum_ctor { "|" enum_ctor } [ terminator ] .
 enum_ctor    = simple_ident [ ctor_payload ] .
 ctor_payload = "(" [ type { "," type } [ "," ] ] ")" .
 
@@ -71,14 +71,15 @@ param      = simple_ident ":" type [ "=" expr ] .
 ret_type = "->" type .
 throws   = "!" [ type ] .
 
-bind_decl = [ vis_mod ] [ "static" ] [ bind_mod ] simple_ident ( ":" type [ bind_op expr ] | bind_op expr ) .
+bind_decl = [ vis_mod ] [ "static" ] [ bind_mod ] simple_ident ( ":" type [ bind_op expr ] | bind_op expr )
+          | tuple_pattern bind_op expr .
 
 type_decl = [ vis_mod ] "type" simple_ident [ generics ] "=" type .
 
 extend_decl = "extend" [ generics ] type [ bounds ] [ where_clause ] extend_body .
 extend_body = "{" [ member_decls ] "}" .
 
-(* ===== Generics, bounds, where ===== *)
+# Generics, bounds, where
 
 generics      = "[" generic_param { "," generic_param } [ "," ] "]" .
 generic_param = simple_ident [ "<:" type_bound ] [ "=" type ] .
@@ -89,7 +90,7 @@ type_bound = type { "&" type } .
 where_clause = "where" where_pred { "," where_pred } [ "," ] .
 where_pred   = type "<:" type_bound .
 
-(* ===== Types ===== *)
+# Types
 
 type          = optional_type .
 optional_type = primary_type { "?" } .
@@ -100,7 +101,7 @@ type_args  = "[" type { "," type } [ "," ] "]" .
 tuple_type = "(" [ type { "," type } [ "," ] ] ")" .
 fn_type    = "fn" "(" [ type { "," type } [ "," ] ] ")" "->" type [ throws ] .
 
-(* ===== Expressions ===== *)
+# Expressions
 
 expr         = catch_expr .
 catch_expr   = range_expr [ "catch" [ simple_ident ] block_expr ] .
@@ -145,18 +146,20 @@ lit_expr   = IntLit | FloatLit | StringLit | "true" | "false" .
 ref_expr   = simple_ident .
 super_expr = "super" .
 
-if_expr    = "if" expr block_expr { "elif" expr block_expr } [ "else" block_expr ] .
+if_expr    = "if" ( pattern ":=" expr | expr ) block_expr
+           { "elif" ( pattern ":=" expr | expr ) block_expr }
+           [ "else" block_expr ] .
 match_expr = "match" expr "{" [ match_arms ] "}" .
 loop_expr  = "loop" block_expr .
-while_expr = "while" expr block_expr .
-for_expr   = "for" pattern "in" expr block_expr .
+while_expr = "while" ( pattern ":=" expr | expr ) block_expr .
+for_expr   = "for" pattern "in" expr [ "if" expr ] block_expr .
 
 return_expr   = "return" [ expr ] .
 break_expr    = "break" [ expr ] .
 continue_expr = "continue" .
 throw_expr    = "throw" expr .
 
-(* ===== Patterns ===== *)
+# Patterns
 
 match_arms = match_arm { terminator match_arm } [ terminator ] .
 match_arm  = pattern [ "if" expr ] "=>" expr .
@@ -172,7 +175,7 @@ literal_pattern  = lit_expr [ range_op lit_expr ] .
 tuple_pattern    = "(" [ pattern { "," pattern } [ "," ] ] ")" .
 path_pattern     = ident [ "(" [ pattern { "," pattern } [ "," ] ] ")" ] .
 
-(* ===== Suffixes ===== *)
+# Suffixes
 
 call_suffix     = "(" [ call_args ] ")" .
 call_args       = call_arg { "," call_arg } [ "," ] .
@@ -183,7 +186,7 @@ field_suffix    = "." simple_ident .
 generic_suffix  = "::" "[" type { "," type } [ "," ] "]" .
 try_suffix      = "?" .
 
-(* ===== Operators ===== *)
+# Operators
 
 bind_op    = ":=" .
 assign_op  = "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "&=" | "|=" .
@@ -194,12 +197,12 @@ term_op    = "+" | "-" .
 factor_op  = "*" | "/" | "%" .
 prefix_op  = "!" | "-" .
 
-(* ===== Modifiers ===== *)
+# Modifiers
 
 vis_mod  = "pub" .
 bind_mod = "const" | "mut" .
 
-(* ===== Identifiers ===== *)
+# Identifiers
 
 ident        = simple_ident { "." simple_ident } .
 simple_ident = Ident | RawIdent .

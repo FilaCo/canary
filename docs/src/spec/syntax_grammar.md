@@ -68,8 +68,9 @@ param_list = "(" [ params ] ")" .
 params     = param { "," param } [ "," ] .
 param      = simple_ident ":" type [ "=" expr ] .
 
-ret_type = "->" type .
-throws   = "!" [ type ] .
+ret_type      = "->" type .
+throws        = "!" exception_set .
+exception_set = [ "|" ] type { "|" type } .
 
 bind_decl = [ vis_mod ] [ "static" ] [ bind_mod ] simple_ident ( ":" type [ bind_op expr ] | bind_op expr )
           | tuple_pattern bind_op expr .

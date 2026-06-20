@@ -58,9 +58,9 @@ ctor_payload = "(" [ type { "," type } [ "," ] ] ")" .
 member_decls = member_decl { terminator member_decl } [ terminator ] .
 member_decl  = fn_decl | init_decl | bind_decl | type_decl .
 
-init_decl = [ vis_mod ] "init" param_list [ throws ] [ where_clause ] block_expr .
+init_decl = [ vis_mod ] "init" param_list [ throws_clause ] [ where_clause ] block_expr .
 
-fn_decl = [ vis_mod ] [ "static" ] [ fn_mod ] "fn" simple_ident [ generics ] param_list [ ret_type ] [ throws ] [ where_clause ] [ fn_body ] .
+fn_decl = [ vis_mod ] [ "static" ] [ fn_mod ] "fn" simple_ident [ generics ] param_list [ ret_type ] [ throws_clause ] [ where_clause ] [ fn_body ] .
 fn_mod  = "override" | "abstract" .
 fn_body = block_expr | ":=" expr .
 
@@ -69,8 +69,7 @@ params     = param { "," param } [ "," ] .
 param      = simple_ident ":" type [ "=" expr ] .
 
 ret_type      = "->" type .
-throws        = "!" exception_set .
-exception_set = [ "|" ] type { "|" type } .
+throws_clause = "throws" type { "|" type } .
 
 bind_decl = [ vis_mod ] [ "static" ] [ bind_mod ] simple_ident ( ":" type [ bind_op expr ] | bind_op expr )
           | tuple_pattern bind_op expr .
@@ -100,7 +99,7 @@ primary_type  = type_path | tuple_type | fn_type .
 type_path  = ident [ type_args ] .
 type_args  = "[" type { "," type } [ "," ] "]" .
 tuple_type = "(" [ type { "," type } [ "," ] ] ")" .
-fn_type    = "fn" "(" [ type { "," type } [ "," ] ] ")" "->" type [ throws ] .
+fn_type    = "fn" "(" [ type { "," type } [ "," ] ] ")" "->" type [ throws_clause ] .
 
 # Expressions
 

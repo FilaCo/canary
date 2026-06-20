@@ -65,17 +65,11 @@ pub enum SyntaxKind {
     Star,
     /// `%`
     Percent,
-    /// `~`
-    Tilde,
-    /// `<<`
-    Shl,
-    /// `>>`
-    Shr,
     /// `<=>`
     Spaceship,
 
     /// `:=`
-    Assign,
+    Bind,
     /// `&=`
     AmpEq,
     /// `|=`
@@ -90,12 +84,6 @@ pub enum SyntaxKind {
     StarEq,
     /// `%=`
     PercentEq,
-    /// `~=`
-    TildeEq,
-    /// `<<=`
-    ShlEq,
-    /// `>>=`
-    ShrEq,
 
     /// `++`
     Inc,
@@ -108,6 +96,12 @@ pub enum SyntaxKind {
     Quest,
     /// `::`
     Colon2,
+    /// `=>`
+    FatArrow,
+    /// `<:`
+    Subtype,
+    /// `_`
+    Wildcard,
 
     /// `{`
     LBrace,
@@ -132,8 +126,6 @@ pub enum SyntaxKind {
     EnumKw,
     /// `class`
     ClassKw,
-    /// `struct`
-    StructKw,
     /// `fn`
     FnKw,
     /// `egg`
@@ -176,6 +168,26 @@ pub enum SyntaxKind {
     InKw,
     /// `while`
     WhileKw,
+    /// `throws`
+    ThrowsKw,
+    /// `abstract`
+    AbstractKw,
+    /// `static`
+    StaticKw,
+    /// `open`
+    OpenKw,
+    /// `override`
+    OverrideKw,
+    /// `init`
+    InitKw,
+    /// `where`
+    WhereKw,
+    /// `super`
+    SuperKw,
+    /// `break`
+    BreakKw,
+    /// `continue`
+    ContinueKw,
 
     /// An identifier or soft keyword e.g. `foo` or `class`.
     Ident,
@@ -186,6 +198,8 @@ pub enum SyntaxKind {
     IntLit,
     /// A floating-point literal constant, e.g. `1.0` or `1e9`.
     FloatLit,
+    /// A string literal constant, e.g. `"foo"`.
+    StringLit,
 
     /// Unknown token, not expected by the lexer, e.g. "№".
     Unknown,
@@ -194,12 +208,61 @@ pub enum SyntaxKind {
     EOF,
 
     // Nodes
+    Error,
+
+    File,
+
+    EggDecl,
     ClassDecl,
-    StructDecl,
+    TraitDecl,
     EnumDecl,
     FnDecl,
-    ParenExpr,
-    LitConstExpr,
+    InitDecl,
+    BindDecl,
+    TypeDecl,
+    ExtendDecl,
+
+    UseStmt,
     ExprStmt,
-    File,
+
+    UseTree,
+    UseGroup,
+
+    BinExpr,
+    PrefixExpr,
+    CallExpr,
+    IndexExpr,
+    FieldExpr,
+    TryExpr,
+    GenericExpr,
+    BlockExpr,
+    LambdaExpr,
+    ParenExpr,
+    ArrayExpr,
+    LitExpr,
+    RefExpr,
+    SuperExpr,
+    IfExpr,
+    MatchExpr,
+    LoopExpr,
+    WhileExpr,
+    ForExpr,
+    ReturnExpr,
+    BreakExpr,
+    ContinueExpr,
+    ThrowExpr,
+
+    EnumCtor,
+
+    ParamList,
+    Param,
+
+    WhereClause,
+    ThrowsClause,
+    SubtypeSet,
+
+    RetType,
+
+    Generics,
+    GenericParam,
 }

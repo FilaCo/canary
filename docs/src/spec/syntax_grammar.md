@@ -26,7 +26,7 @@ stmt = use_stmt
 expr_stmt = expr [ assign_op expr ] .
 
 use_stmt  = "use" use_tree .
-use_tree  = ident [ "::" "*" | "::" use_group | "as" simple_ident ] .
+use_tree  = ident [ "." "*" | "." use_group | "as" simple_ident ] .
 use_group = "{" [ use_tree { "," use_tree } [ "," ] ] "}" .
 
 (* ===== Declarations ===== *)
@@ -60,7 +60,7 @@ member_decl  = fn_decl | init_decl | bind_decl | type_decl .
 
 init_decl = [ vis_mod ] "init" param_list [ throws ] [ where_clause ] block_expr .
 
-fn_decl = [ vis_mod ] [ "static" ] [ fn_mod ] "fn" simple_ident [ generics ] param_list [ ret_type ] [ throws ] [ context_params ] [ where_clause ] [ fn_body ] .
+fn_decl = [ vis_mod ] [ "static" ] [ fn_mod ] "fn" simple_ident [ generics ] param_list [ ret_type ] [ throws ] [ where_clause ] [ fn_body ] .
 fn_mod  = "override" | "abstract" .
 fn_body = block_expr | ":=" expr .
 
@@ -68,9 +68,8 @@ param_list = "(" [ params ] ")" .
 params     = param { "," param } [ "," ] .
 param      = simple_ident ":" type [ "=" expr ] .
 
-ret_type       = "->" type .
-throws         = "!" [ type ] .
-context_params = "with" param_list .
+ret_type = "->" type .
+throws   = "!" [ type ] .
 
 bind_decl = [ vis_mod ] [ "static" ] [ bind_mod ] simple_ident ( ":" type [ bind_op expr ] | bind_op expr ) .
 
@@ -142,7 +141,7 @@ lambda_param  = simple_ident [ ":" type ] .
 
 paren_expr = "(" [ expr { "," expr } [ "," ] ] ")" .
 array_expr = "[" [ expr { "," expr } [ "," ] ] "]" .
-lit_expr   = IntLit | FloatLit | "true" | "false" .
+lit_expr   = IntLit | FloatLit | StringLit | "true" | "false" .
 ref_expr   = simple_ident .
 super_expr = "super" .
 
@@ -166,14 +165,12 @@ pattern         = or_pattern .
 or_pattern      = primary_pattern { "|" primary_pattern } .
 primary_pattern = wildcard_pattern
                 | literal_pattern
-                | ctor_pattern
                 | tuple_pattern
-                | binding_pattern .
+                | path_pattern .
 wildcard_pattern = "_" .
 literal_pattern  = lit_expr [ range_op lit_expr ] .
-ctor_pattern     = ident [ "(" [ pattern { "," pattern } [ "," ] ] ")" ] .
 tuple_pattern    = "(" [ pattern { "," pattern } [ "," ] ] ")" .
-binding_pattern  = simple_ident .
+path_pattern     = ident [ "(" [ pattern { "," pattern } [ "," ] ] ")" ] .
 
 (* ===== Suffixes ===== *)
 
@@ -204,6 +201,6 @@ bind_mod = "const" | "mut" .
 
 (* ===== Identifiers ===== *)
 
-ident        = simple_ident { "::" simple_ident } .
+ident        = simple_ident { "." simple_ident } .
 simple_ident = Ident | RawIdent .
 ```
